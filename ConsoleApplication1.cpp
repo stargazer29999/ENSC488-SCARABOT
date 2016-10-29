@@ -1,4 +1,4 @@
-/// ConsoleApplication1.cpp : Defines the entry point for the console application.
+// ConsoleApplication1.cpp : Defines the entry point for the console application.
 //
 
 /*
@@ -33,6 +33,7 @@ double* ITOU(double** internal_form);
 double** TMULT(double** form1, double** form2);
 double** TINVERT(double** internal_form);
 double* WHERE(double* joint);
+double* SOLVE(double** Tmatrix);
 
 int main() {
 
@@ -108,14 +109,14 @@ int main() {
 		}
 	cout << endl<< endl;
 
-	//Test 5: WHERE
+	//Test 5: KIN
 	test_joint = new double[HEIGHT];
 	test_joint[0] = 0;
 	test_joint[1] = 0;
 	test_joint[2] = 0;
 	test_joint[3] = 0;
 	
-	cout << "Test 5: WHERE" << endl;
+	cout << "Test 5: KIN" << endl;
 	test_location = WHERE(test_joint);
 	for (int x = 0; x<HEIGHT; x++) {
 			cout << test_location[x]<< "\t";
@@ -350,6 +351,58 @@ double* WHERE(double* joint) {
 
 		return user_form;
 	//}
+
+}
+
+
+//Inputs the Transfer Matrix and ouputs the joint varaibles
+double* SOLVE(double** Tmatrix) {
+
+	double* joints;
+	double a, b, c;
+	double theta1, theta1_, theta2, theta2_, theta2_1, theta2_2, theta4, theta4_;
+
+	joints = new double[HEIGHT];
+
+	//Find value of d3
+	joints[2] = -Tmatrix[2][3] - 480;
+
+	//Find value of Theta1
+	theta1 = atan2(Tmatrix[0][2]/ Tmatrix[1][2], 1);
+	theta1_ = atan2(-Tmatrix[0][2] / Tmatrix[1][2], -1) + PI;
+
+	//Find value of Theta2
+	theta2 = atan2((1 - ((cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142);
+	theta2_ = atan2(-(1 - ((cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142);
+	theta2_1 = atan2((1 - ((cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142);
+	theta2_2 = atan2(-(1 - ((cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142);
+
+	//Find value of Theta4
+	c = cos(theta1)*Tmatrix[0][1] + Tmatrix[1][1]*sin(theta1);
+	a = sin(theta2);
+	b = cos(theta2);
+	if ((c + a) == 0) {
+		cout << "Degenerate case\n";
+		theta4 = 2 * atan2(-a / b, 1);
+		cout << "apply for both theta2 and theta2** for a total of 2 cases";
+	}
+	else if (b == 0){
+			cout << "Degenerate case\n";
+	if (c == 0)
+		cout << "infinite solutions\n";
+	else
+		cout << "no solution\n";
+			
+	}
+		
+	else {
+		theta4 = atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1);
+		theta4_ = atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1);
+		cout << "apply for both theta2 and theta2** for a total of four cases";
+		}
+			
+
+	return joints;
 
 }
 
