@@ -1,4 +1,4 @@
-// ConsoleApplication1.cpp : Defines the entry point for the console application.
+/// ConsoleApplication1.cpp : Defines the entry point for the console application.
 //
 
 /*
@@ -32,6 +32,7 @@ double** UTOI(double* user_form);
 double* ITOU(double** internal_form);
 double** TMULT(double** form1, double** form2);
 double** TINVERT(double** internal_form);
+double* WHERE(double* joint);
 
 int main() {
 
@@ -39,6 +40,9 @@ int main() {
 	double** test_matrix;
 	double** tmult_matrix;
 	double** tinvert_matrix;
+	double* test_joint;
+	double* test_location;
+
 
 	test_user = new double[HEIGHT];
 	test_matrix = new double*[HEIGHT];
@@ -104,6 +108,19 @@ int main() {
 		}
 	cout << endl<< endl;
 
+	//Test 5: WHERE
+	test_joint = new double[HEIGHT];
+	test_joint[0] = 0;
+	test_joint[1] = 0;
+	test_joint[2] = 0;
+	test_joint[3] = 0;
+	
+	cout << "Test 5: WHERE" << endl;
+	test_location = WHERE(test_joint);
+	for (int x = 0; x<HEIGHT; x++) {
+			cout << test_location[x]<< "\t";
+	}
+	cout << endl << endl;
 
 
 	return 0;
@@ -163,7 +180,7 @@ double** UTOI(double* user_form) {
 }
 
 /* Function: ITOU
-* Takes the Transformation matrix and outputs the values of x, y and theta
+* Takes the Transformation matrix and outputs the values of x, y,z and theta
 */
 double* ITOU(double** internal_form) {
 	double* user_form;
@@ -260,5 +277,79 @@ double** TINVERT(double** internal_form) {
 	}
 
 	return internal_form;
+}
+
+
+//Inputs the joint values and ouputs the location of the last frame as x,y,z, theta
+double* WHERE(double* joint) {
+
+	double** internal_form;
+	double theta1, theta2, d3, theta4;
+	double* user_form;
+
+	user_form = new double[HEIGHT];
+
+	for (int i = 0; i < HEIGHT; i++) {
+		user_form[i] = 0;
+	}
+
+	//Allocate memory
+	internal_form = new double*[HEIGHT];
+	for (int i = 0; i < HEIGHT; i++) {
+		internal_form[i] = new double[WIDTH];
+	}
+
+	theta1 = joint[0] * (PI / 180);
+	theta2 = joint[1] * (PI / 180);
+	d3 = joint[2];
+	theta4 = joint[3] * (PI / 180);
+
+	//Error code
+	//											is the return zero correct?
+	if (theta1 > 150 || theta1 < -150) {
+		cout << "ERROR: Joint 1 limit";
+		//return 0;
+	}
+/*	else if (theta2 > 100 || theta2 < -100) {
+		cout << "ERROR: Joint 2 limit";
+		return 0;
+	}
+	else if (d3<-200 || d3>-100) {
+		cout << "ERROR: Joint 3 limit";
+		return 0;
+	}	
+	else if (theta4 > 160 || theta4 < -160) {
+		cout << "ERROR: Joint 4 limit";
+		return 0;
+	}
+	
+	else {
+	*/
+		internal_form[0][0] = sin(theta4)*sin(theta1 + theta2) - cos(theta4)*cos(theta1 + theta2);
+		internal_form[0][1] = sin(theta1 + theta2 + theta4);
+		internal_form[0][2] = 0;
+		internal_form[0][3] = 195 * cos(theta1) + 142 * cos(theta1 + theta2);
+
+		internal_form[1][0] = -sin(theta1 + theta2 + theta4);
+		internal_form[1][1] = sin(4)*sin(theta1 + theta2) - cos(theta4)*cos(theta1 + theta2);
+		internal_form[1][2] = 0;
+		internal_form[1][3] = 195 * sin(theta1) + 142 * sin(theta1*theta2);
+
+		internal_form[2][0] = 0;
+		internal_form[2][1] = 0;
+		internal_form[2][2] = -1;
+		internal_form[2][3] = -d3 - 480;
+
+		internal_form[3][0] = 0;
+		internal_form[3][1] = 0;
+		internal_form[3][2] = 0;
+		internal_form[3][3] = 1;
+
+		//Transform to user_form;
+		user_form = ITOU(internal_form);
+
+		return user_form;
+	//}
+
 }
 
