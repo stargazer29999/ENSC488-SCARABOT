@@ -109,12 +109,13 @@ int main() {
 		}
 	cout << endl<< endl;
 
-	//Test 5: KIN
+	//Test 5: WHERE
 	test_joint = new double[HEIGHT];
 	test_joint[0] = 0;
 	test_joint[1] = 0;
-	test_joint[2] = 0;
+	test_joint[2] = -150;
 	test_joint[3] = 0;
+
 	
 	cout << "Test 5: KIN" << endl;
 	test_location = WHERE(test_joint);
@@ -308,31 +309,30 @@ double* WHERE(double* joint) {
 	//Error code
 	//											is the return zero correct?
 	if (theta1 > 150 || theta1 < -150) {
-		cout << "ERROR: Joint 1 limit";
-		//return 0;
+		cout << "ERROR: Joint 1 limit\n CHANGE code in GUI to Exit Program";
+		
 	}
-/*	else if (theta2 > 100 || theta2 < -100) {
-		cout << "ERROR: Joint 2 limit";
-		return 0;
+	else if (theta2 > 100 || theta2 < -100) {
+		cout << "ERROR: Joint 2 limit\n CHANGE code in GUI to Exit Program";
+		
 	}
 	else if (d3<-200 || d3>-100) {
-		cout << "ERROR: Joint 3 limit";
-		return 0;
+		cout << "ERROR: Joint 3 limit\n CHANGE code in GUI to Exit Program";
+		
 	}	
-	else if (theta4 > 160 || theta4 < -160) {
-		cout << "ERROR: Joint 4 limit";
-		return 0;
+	else if (theta4 > 160 || theta4 <-160) {
+		cout << "ERROR: Joint 4 limit\n CHANGE code in GUI to Exit Program";
+		
 	}
-	
 	else {
-	*/
+	
 		internal_form[0][0] = sin(theta4)*sin(theta1 + theta2) - cos(theta4)*cos(theta1 + theta2);
 		internal_form[0][1] = sin(theta1 + theta2 + theta4);
 		internal_form[0][2] = 0;
 		internal_form[0][3] = 195 * cos(theta1) + 142 * cos(theta1 + theta2);
 
 		internal_form[1][0] = -sin(theta1 + theta2 + theta4);
-		internal_form[1][1] = sin(4)*sin(theta1 + theta2) - cos(theta4)*cos(theta1 + theta2);
+		internal_form[1][1] = sin(theta4)*sin(theta1 + theta2) - cos(theta4)*cos(theta1 + theta2);
 		internal_form[1][2] = 0;
 		internal_form[1][3] = 195 * sin(theta1) + 142 * sin(theta1*theta2);
 
@@ -350,7 +350,7 @@ double* WHERE(double* joint) {
 		user_form = ITOU(internal_form);
 
 		return user_form;
-	//}
+	}
 
 }
 
@@ -367,42 +367,107 @@ double* SOLVE(double** Tmatrix) {
 	//Find value of d3
 	joints[2] = -Tmatrix[2][3] - 480;
 
+
 	//Find value of Theta1
-	theta1 = atan2(Tmatrix[0][2]/ Tmatrix[1][2], 1);
-	theta1_ = atan2(-Tmatrix[0][2] / Tmatrix[1][2], -1) + PI;
+	if (Tmatrix[0][2] == 0 && Tmatrix[1][2] == 0) {
+		theta1 = atan2(0, 1);
+		theta1_ = atan2(0, 1)+PI; //??
+	}
+	else {
+		theta1 = atan2(Tmatrix[0][2] / Tmatrix[1][2], 1);
+		theta1_ = atan2(-Tmatrix[0][2] / Tmatrix[1][2], -1) + PI;
+	}
 
 	//Find value of Theta2
-	theta2 = atan2((1 - ((cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142);
-	theta2_ = atan2(-(1 - ((cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1)) / 142 - 195 / 142);
-	theta2_1 = atan2((1 - ((cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142);
-	theta2_2 = atan2(-(1 - ((cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142) ^ 2) ^ (1 / 2), (cos(theta1_)*Tmatrix[0][3]) / 142 + (Tmatrix[1][3] * sin(theta1_)) / 142 - 195 / 142);
+	double C2;	//simply cosine(theta2)
+	C2 = cos(theta1)*Tmatrix[0][3] / 142 + Tmatrix[1][3] * sin(theta1) / 142 - 195 / 142;
+
+	if ((int)C2 == 1) {
+		theta2 = atan2(0, 1);
+		theta2_ = atan2(0, 1) + PI;
+
+	}else if (pow(C2, 2)>1) {			///Kara: get someone to check this please
+
+		cout << "ERROR: Joint 2 is not solvable No solution \n CHANGE code in GUI to Exit Program";
+
+	}else {
+		theta2 = atan2(sqrt((1 - pow(C2 ,2))), C2);
+		theta2_ = atan2(-sqrt((1- pow(C2,2))), C2);
+	}
+
+	//Ge thet Second set of possible avlues for theta2
+	C2= cos(theta1_)*Tmatrix[0][3] / 142 + Tmatrix[1][3] * sin(theta1_) / 142 - 195 / 142;
+	if ((int)C2 == 1) {
+		theta2_1 = atan2(0, 1);
+		theta2_2 = atan2(0, 1) + PI;
+
+	}else if(pow(C2, 2)>1){			///Kara: get someone to check this please
+
+		cout << "ERROR: Joint 2 is not solvable No solution \n CHANGE code in GUI to Exit Program";
+
+	}else {
+		theta2_1 = atan2(sqrt((1 - pow(C2, 2))), C2);
+		theta2_2 = atan2(sqrt((1 - pow(C2, 2))), C2);
+	}
+
 
 	//Find value of Theta4
-	c = cos(theta1)*Tmatrix[0][1] + Tmatrix[1][1]*sin(theta1);
-	a = sin(theta2);
-	b = cos(theta2);
-	if ((c + a) == 0) {
-		cout << "Degenerate case\n";
-		theta4 = 2 * atan2(-a / b, 1);
-		cout << "apply for both theta2 and theta2** for a total of 2 cases";
+	findTheta4(Tmatrix, theta1, theta2);
+
+
+	//Error Code
+
+
+	//Error Code for Theta1
+	theta1 = theta1* (180 / PI);
+
+	if (theta1 > 100 || theta1 < -100) {
+		cout << "ERROR: Joint 1 limit\n CHANGE code in GUI to ___";
+
 	}
-	else if (b == 0){
-			cout << "Degenerate case\n";
-	if (c == 0)
-		cout << "infinite solutions\n";
-	else
-		cout << "no solution\n";
-			
+	if (theta1_ > 100 || theta1_ < -100) {
+		cout << "ERROR: Joint 1 limit\n CHANGE code in GUI to ___";
+
 	}
-		
-	else {
-		theta4 = atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1);
-		theta4_ = atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1);
-		cout << "apply for both theta2 and theta2** for a total of four cases";
-		}
-			
+	if (joints[2]<-200 || joints[2]>-100) {
+		cout << "ERROR: Joint 2 limit\n CHANGE code in GUI to ___";
+	}
+
+	//Find the shortest distance
+
 
 	return joints;
+}
 
+double *findTheta4(double **Tmatrix, double theta1, double theta2) {
+	double* theta4;
+	theta4 = new double[2];
+
+	double a, b, c;
+	c = cos(theta1)*Tmatrix[0][1] + Tmatrix[1][1] * sin(theta1);
+	a = sin(theta2);
+	b = cos(theta2);
+	if ((char)(c + a) == 0) {
+		cout << "Degenerate case\n";
+		theta4[0] = 2 * atan2(-a / b, 1);
+		//theta4[1]= 2 * atan2(-a / b, 1);
+		cout << "apply for both theta2 and theta2** for a total of 2 cases";
+	}
+	else if ((char)b == 0) {
+		cout << "Degenerate case\n";
+		if ((char)c == 0)
+			cout << "infinite solutions\n";
+		else
+			cout << "no solution\n";
+
+	}
+
+	else {
+		theta4[0] = atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1);
+		theta4[1] = atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1);
+		cout << "apply for both theta2 and theta2** for a total of four cases";
+	}
+
+	return theta4;
 }
 
