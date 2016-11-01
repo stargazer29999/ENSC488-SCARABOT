@@ -141,7 +141,7 @@ int main() {
 	//tested invalid x (400,50, -300, 90) ->Passed
 	//tested invlid y (337,400,-300, 180)->Passed
 
-	/*test_user[0] = 337; //valid 
+	test_user[0] = 337; //valid 
 	test_user[1] = 400; //invalid y
 	test_user[2] = -300;//valid z value
 	test_user[3] = 180; //valid thate?
@@ -153,7 +153,7 @@ int main() {
 	}
 	cout << endl << endl;
 
-	*/
+	
 
 
 
@@ -315,7 +315,7 @@ double** TINVERT(double** internal_form) {
 }
 
 
-//Inputs the joint values and ouputs the location of the last frame as x,y,z, theta
+//Inputs the joint values and ouputs the location of the last frame as a transformation matrix
 double** WHERE(double* joint) {
 
 	double** internal_form;
@@ -457,7 +457,7 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 
 	//******************Find value of Theta2********************************
 	int i = 0;
-	while ( i < 8) {
+	while (i < 8) {
 		theta2 = findTheta2(Tmatrix, internal_joints[i][1]);
 		internal_joints[i][2]= theta2[0] * 180/PI;
 		internal_joints[i][0] = theta2[2];
@@ -529,7 +529,8 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 		}
 		
 	}
-	if (noSolution) {
+
+	if (noSolution && internal_joints[index][0] == 0) {
 		cout << "***** No Solution ever found do not set Device to run ********"<<endl;
 
 
