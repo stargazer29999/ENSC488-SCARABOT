@@ -36,7 +36,7 @@ double** WHERE(double* joint);
 double* SOLVE(double*oldJoints, double** Tmatrix);
 
 double* findTheta2(double **Tmatrix, double theta1);
-double *findTheta4(double **Tmatrix, double theta1, double theta2);
+double* findTheta4(double **Tmatrix, double* oldJoints, double theta1, double theta2);
 void printInternalMatrix(double **matrix);
 
 int main() {
@@ -57,7 +57,10 @@ int main() {
 		test_matrix[i] = new double[WIDTH];
 	}
 
+	cout << "***** We are assuming that all input joint values are some value between -180 and 180***" << endl;
+
 /*
+
 	//Test 1: UTOI
 	cout << "Test 1: UTOI" << endl;
 	test_user[0] = 2;
@@ -115,7 +118,7 @@ int main() {
 	test_joint[1] = 0;
 	test_joint[2] = -150;
 	test_joint[3] = 0;
-	
+/* 	
 	cout << "Test 5: WHERE" << endl;
 	test_matrix = WHERE(test_joint);
 	test_location = ITOU(test_matrix);
@@ -125,10 +128,10 @@ int main() {
 	}
 	cout << endl << endl;
 
-
+	*/
 	//Test 6: SOLVE
 	newjoints=new double[HEIGHT];
-	/*
+/*	
 	cout << "Test 6: SOLVE" << endl;
 	newjoints = SOLVE(test_joint, test_matrix);
 
@@ -137,25 +140,27 @@ int main() {
 	}
 	cout << endl << endl;
 	
-	*/
+*/	
 	cout << "Test 6.1: SOLVE for  no solution" << endl;
-	//tested invalid x (500,50, -300, 90) ->Passed
-	//tested invlid y (337,400,-300, 180) ->
+	//test for inavlid joint varaibles
 
-	test_user[0] = 337; //valid 
+	test_user[0] = 100; //valid 
 	test_user[1] = 500; //invalid y
-	test_user[2] = -500;//valid z value
-	test_user[3] = 90; //valid thate?
+	test_user[2] = -300;//valid z value
+	test_user[3] = 90; //valid theta?
 
-	test_matrix = UTOI(test_user); 
-	for (int x = 0; x<HEIGHT; x++) {
-		for (int y = 0; y<WIDTH; y++) {
+	cout <<endl<< " input x,y,z, theta gives a transformation matrix" << endl;
+	test_matrix = UTOI(test_user);
+	for (int x = 0; x < HEIGHT; x++) {
+		for (int y = 0; y < WIDTH; y++) {
 			cout << test_matrix[x][y] << "\t";
 		}
 		cout << endl;
 	}
+	
 
 	newjoints = SOLVE(test_joint, test_matrix);
+	cout << "the new joint values are:" << endl;
 	for (int x = 0; x<HEIGHT; x++) {
 		cout << newjoints[x] << "\t";
 	}
@@ -341,26 +346,27 @@ double** WHERE(double* joint) {
 		internal_form[i] = new double[WIDTH];
 	}
 
-	theta1 = joint[0] * (PI / 180);
-	theta2 = joint[1] * (PI / 180);
-	d3 = joint[2];
-	theta4 = joint[3] * (PI / 180);
-
 	//Error code is the return zero correct?
-	if (theta1 > 150 || theta1 < -150) {
-		cout << "ERROR: Joint 1 limit\n CHANGE code in GUI to Exit Program";	
+	if (210>joint[0]> 150 || joint[0] < -150) {
+		cout << "ERROR: Joint 1 limit\n CHANGE code in GUI to Exit Program";
 	}
-	else if (theta2 > 100 || theta2 < -100) {
-		cout << "ERROR: Joint 2 limit\n CHANGE code in GUI to Exit Program";	
+	else if (joint[1] > 100 || joint[1] < -100) {
+		cout << "ERROR: Joint 2 limit\n CHANGE code in GUI to Exit Program";
 	}
-	else if (d3<-200 || d3>-100) {
+	else if (joint[2]<-200 || joint[2]>-100) {
 		cout << "ERROR: Joint 3 limit\n CHANGE code in GUI to Exit Program";
-	}	
-	else if (theta4 > 160 || theta4 <-160) {
+	}
+	else if (joint[3] > 160 || joint[3] <-160) {
 		cout << "ERROR: Joint 4 limit\n CHANGE code in GUI to Exit Program";
 	}
+
 	else {
 	
+		theta1 = joint[0] * (PI / 180);
+		theta2 = joint[1] * (PI / 180);
+		d3 = joint[2];
+		theta4 = joint[3] * (PI / 180);
+
 		internal_form[0][0] = sin(theta4)*sin(theta1 + theta2) - cos(theta4)*cos(theta1 + theta2);
 		internal_form[0][1] = sin(theta1 + theta2 + theta4);
 		internal_form[0][2] = 0;
@@ -423,7 +429,7 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 		//error checking
 		if (internal_joints[i][3]<-200 || internal_joints[i][3]>-100) {
 			internal_joints[i][0]= 0;
-			cout << "SOLVE_ERROR: Joint 3 limit "<<endl;
+			//cout << "SOLVE_ERROR: Joint 3 limit "<<endl;
 		}
 	}
 	cout << "found d3" << endl;
@@ -431,14 +437,19 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 
 	//******************Find value of Theta1********************************
 	//Do calcualtions
-	if (Tmatrix[0][2] == 0 && Tmatrix[1][2] == 0) {
-		theta1 = atan2(0, 1);
-		theta1_ = atan2(0, 1)+PI; //??
+	if (Tmatrix[0][2] == 0) { //Degen case:1
+		theta1 = 0;
+		theta1_=PI;
+	}
+	else if (Tmatrix[1][2] == 0) { //Degen case:2
+		theta1 = PI/2;
+		theta1_ = theta1 +PI;
 	}
 	else {
-		theta1 = atan2(Tmatrix[0][2] / Tmatrix[1][2], 1);
-		theta1_ = atan2(-Tmatrix[0][2] / Tmatrix[1][2], -1) + PI;
+		theta1 = 2 * atan2((Tmatrix[1][2] + sqrt(pow(Tmatrix[1][2], 2) + pow(Tmatrix[0][2], 2))) / Tmatrix[0][2], 1);
+		theta1_ = 2 * atan2((Tmatrix[1][2] - sqrt(pow(Tmatrix[1][2], 2) + pow(Tmatrix[0][2], 2))) / Tmatrix[0][2], 1);
 	}
+
 	//Store in matrix and error check
 	for (int i = 0; i < 8; i++) {
 		if (i < 4) { 
@@ -461,8 +472,8 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 	while (i < 8) {
 		theta2 = findTheta2(Tmatrix, internal_joints[i][1]);
 		internal_joints[i][2]= theta2[0] * 180/PI;
+		printInternalMatrix(internal_joints);
 
-		
 	//Error Checking
 		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100 || theta2[2] == 0) {
 			internal_joints[i][0] = 0;
@@ -470,7 +481,7 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 		}
 		i++;
 		internal_joints[i][2] = theta2[1] * 180/PI;
-
+		printInternalMatrix(internal_joints);
 	//Error Checking
 		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100|| theta2[2]==0) {
 			internal_joints[i][0] = 0;
@@ -485,16 +496,16 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 	//****************** Find value of Theta4 ******************
 	i = 0;
 	while(i < 8) {
-		theta4=findTheta4(Tmatrix, internal_joints[i][1], internal_joints[i][2]);
+		theta4=findTheta4(Tmatrix,oldJoints, internal_joints[i][1], internal_joints[i][2]);
 		internal_joints[i][4] = theta4[0] * 180/PI;
 		//Error Checking
-		if (internal_joints[i][4] >160 || internal_joints[i][4] < -160) {
+		if (internal_joints[i][4] >160 || internal_joints[i][4] < -160 || theta4[2] == 0) {
 			internal_joints[i][0]= 0;
 			//cout << "SOLVE_ERROR: Joint 4 limit reached\t invalid Tmatrix"<<endl;
 		}
 		i++;
 		internal_joints[i][4] = theta4[1] * 180/PI;
-			if (internal_joints[i][4] > 160 || internal_joints[i][4] < -160) {
+			if (internal_joints[i][4] > 160 || internal_joints[i][4] < -160 || theta4[2] == 0) {
 				internal_joints[i][0]= 0;
 				//cout << "SOLVE_ERROR: Joint 4 limit reached"<<endl;
 			}
@@ -553,51 +564,59 @@ double* findTheta2(double **Tmatrix, double theta1) {
 
 	theta2[2] = 1;	//assign intial valid solution
 	double C2;	//simply cosine(theta2)
-	C2 = cos(theta1)*Tmatrix[0][3] / 142 + Tmatrix[1][3] * sin(theta1) / 142 - 195 / 142;
+	C2 =( cos(theta1)*Tmatrix[0][3] + Tmatrix[1][3] * sin(theta1)  - 195) / 142;
 
-	if ((int)C2 == 1) {
-		theta2[0] = atan2(0, 1);
-		theta2[1] =  atan2(0, 1) + PI;
+	if (C2 == 1) {
+		theta2[0] = PI/2;
+		theta2[1] = -PI/2;
 
 	}
-	else if (pow(C2, 2)>1) {			///Kara: get someone to check this please
+	else if (pow(C2, 2)>1) {
 			theta2[3] = 0;
 			cout << "ERROR: Joint 2 is not solvable No solution CHANGE code in GUI to Exit Program"<<endl; 
 
 	}
 	else {
-		theta2[0] = atan2(sqrt((1 - pow(C2, 2))), C2);
-		theta2[1] = atan2(-sqrt((1 - pow(C2, 2))), C2);
+		theta2[0] = atan2(sqrt((1 - C2*C2)), C2);
+		theta2[1] = atan2(-sqrt((1 - C2*C2)), C2);
 	}
 
 	return theta2;
 }
 
 
-double *findTheta4(double **Tmatrix, double theta1, double theta2) {
+double *findTheta4(double **Tmatrix, double* oldJoints, double theta1, double theta2) {
 	double* theta4;
-	theta4 = new double[2];
-
 	double a, b, c;
+
+
 	c = cos(theta1)*Tmatrix[0][1] + Tmatrix[1][1] * sin(theta1);
 	a = sin(theta2);
 	b = cos(theta2);
-	if ((char)(c + a) == 0) {
-		cout << "Degenerate case"<<endl;
-		theta4[0] = 2 * atan2(-a / b, 1);
-		//theta4[1]= 2 * atan2(-a / b, 1);
-	}
-	else if ((char)b == 0) {
-		cout << "Degenerate case"<<endl;
-		if ((char)c == 0)
-			cout << "infinite solutions"<<endl;
-		else
-			cout << "no solution"<<endl;
-	}
 
+	theta4 = new double[3];
+	theta4[2] = 1;
+
+	if ((c + a) == 0) {
+		cout << "Degenerate case (c + a) == 0"<<endl;
+		theta4[0] = 2 * atan2(-a / b, 1);
+		theta4[1]= theta4[0];
+	}
+	else if (b == 0) {
+//		cout << "Degenerate case"<<endl;
+		if ((char)c == 0) {
+			theta4[0] = oldJoints[3];
+			theta4[1] = oldJoints[3];
+			cout << "infinite solutions" << endl;
+		}
+		else {
+			cout << "no solution" << endl;
+			theta4[2] = 0;
+		}		
+	}
 	else {
-		theta4[0] = atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1);
-		theta4[1] = atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1);
+		theta4[0] = 2 * atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1);
+		theta4[1] = 2 * atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1);
 
 	}
 
