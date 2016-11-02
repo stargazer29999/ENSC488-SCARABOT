@@ -128,6 +128,7 @@ int main() {
 
 	//Test 6: SOLVE
 	newjoints=new double[HEIGHT];
+	/*
 	cout << "Test 6: SOLVE" << endl;
 	newjoints = SOLVE(test_joint, test_matrix);
 
@@ -136,17 +137,24 @@ int main() {
 	}
 	cout << endl << endl;
 	
-
+	*/
 	cout << "Test 6.1: SOLVE for  no solution" << endl;
-	//tested invalid x (400,50, -300, 90) ->Passed
-	//tested invlid y (337,400,-300, 180)->Passed
+	//tested invalid x (500,50, -300, 90) ->Passed
+	//tested invlid y (337,400,-300, 180) ->
 
 	test_user[0] = 337; //valid 
-	test_user[1] = 400; //invalid y
-	test_user[2] = -300;//valid z value
-	test_user[3] = 180; //valid thate?
+	test_user[1] = 500; //invalid y
+	test_user[2] = -500;//valid z value
+	test_user[3] = 90; //valid thate?
 
 	test_matrix = UTOI(test_user); 
+	for (int x = 0; x<HEIGHT; x++) {
+		for (int y = 0; y<WIDTH; y++) {
+			cout << test_matrix[x][y] << "\t";
+		}
+		cout << endl;
+	}
+
 	newjoints = SOLVE(test_joint, test_matrix);
 	for (int x = 0; x<HEIGHT; x++) {
 		cout << newjoints[x] << "\t";
@@ -154,7 +162,6 @@ int main() {
 	cout << endl << endl;
 
 	
-
 
 
 //PUT NOTHING HERE -BREAKPOINT
@@ -386,8 +393,13 @@ double** WHERE(double* joint) {
 //Inputs the Transfer Matrix and ouputs the joint varaibles
 double* SOLVE(double*oldJoints, double** Tmatrix) {
 
-	//Make a 5x4 double to store all possible solutions or and an index to tell if value is valid or not (1==valid, 0==inavlid)
+	double* joints;
+	double theta1, theta1_;
+	double* theta4;
+	double* theta2;
 
+
+	//Make a 5x4 double to store all possible solutions or and an index to tell if value is valid or not (1==valid, 0==inavlid)
 	double** internal_joints;
 	//Allocate memory
 	internal_joints = new double*[8];
@@ -395,15 +407,7 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 		internal_joints[i] = new double[5];
 	}
 
-
-	double* joints;
-//	double a, b, c;
-	double theta1, theta1_;// theta2, theta2_, theta2_1, theta2_2; //theta4, theta4_
-	double* theta4;
-	double* theta2;	//Kara: have I referenced these properly?
-
-
-  //Column 0 is validity index, Column 1 is joint 1, column 2 is joint 2, etc
+	//Column 0 is validity index, Column 1 is joint 1, column 2 is joint 2, etc
 	//Intialize all to valid
 	for (int i = 0; i < 8; i++) {
 		internal_joints[i][0] = 1;
@@ -411,18 +415,15 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 	cout << "Loaded with ones" << endl;
 	printInternalMatrix(internal_joints);
 
-
-	joints = new double[HEIGHT];
-
-	//************************Find value of d3**********************************8
-	//joints[2] = -Tmatrix[2][3] - 480;		remove??
+	
+	//************************Find value of d3**********************************
 	for (int i = 0; i < 8; i++) {
 		internal_joints[i][3]= -Tmatrix[2][3] - 480;
 
 		//error checking
 		if (internal_joints[i][3]<-200 || internal_joints[i][3]>-100) {
 			internal_joints[i][0]= 0;
-			cout << "SOLVE_ERROR: Joint 2 limit reached invalid Tmatrix "<<endl;
+			cout << "SOLVE_ERROR: Joint 3 limit "<<endl;
 		}
 	}
 	cout << "found d3" << endl;
@@ -460,17 +461,18 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 	while (i < 8) {
 		theta2 = findTheta2(Tmatrix, internal_joints[i][1]);
 		internal_joints[i][2]= theta2[0] * 180/PI;
-		internal_joints[i][0] = theta2[2];
+
+		
 	//Error Checking
-		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100) {
+		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100 || theta2[2] == 0) {
 			internal_joints[i][0] = 0;
 			//cout << "SOLVE_ERROR: Joint 2 limit reached\t invalid Tmatrix"<<endl;
 		}
 		i++;
 		internal_joints[i][2] = theta2[1] * 180/PI;
-		internal_joints[i][0] = theta2[2] ;
+
 	//Error Checking
-		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100) {
+		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100|| theta2[2]==0) {
 			internal_joints[i][0] = 0;
 		//	cout << "SOLVE_ERROR: Joint 2 limit reached\t invalid Tmatrix "<<endl;
 		}
@@ -504,7 +506,7 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 
 
 	
-	//Find the shortest distance if valid
+	//**********Find the shortest distance if soltuon is valid********************
 	double minArray[8] = { 0,0,0,0,0,0,0,0 };
 	double min;
 	int index;
@@ -527,15 +529,15 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 			index = i;
 			noSolution = false;
 		}
-		
 	}
 
 	if (noSolution && internal_joints[index][0] == 0) {
 		cout << "***** No Solution ever found do not set Device to run ********"<<endl;
-
-
 	}
-	//palce results into output array
+
+	//place results into output array
+	joints = new double[HEIGHT];
+
 	if (internal_joints[0][index]!=0)
 		for (int i = 0; i < HEIGHT; i++) {
 			joints[i] = internal_joints[index][i+1];
