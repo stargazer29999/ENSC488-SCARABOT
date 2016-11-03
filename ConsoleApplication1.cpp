@@ -595,7 +595,7 @@ double* findTheta2(double **Tmatrix, double theta1) {
 
 	if (C2 == 1) { //Degenerate case: 1
 		theta2[0] = 0;
-		theta2[1] = -PI;
+		theta2[1] = PI;
 
 	}
 	else if (pow(C2, 2)>1) { //Degenerate case: 2
