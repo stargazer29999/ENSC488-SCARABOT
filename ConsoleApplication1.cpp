@@ -118,7 +118,7 @@ int main() {
 	test_joint[1] = 0;
 	test_joint[2] = -150;
 	test_joint[3] = 0;
-/* 	
+
 	cout << "Test 5: WHERE" << endl;
 	test_matrix = WHERE(test_joint);
 	test_location = ITOU(test_matrix);
@@ -128,10 +128,10 @@ int main() {
 	}
 	cout << endl << endl;
 
-	*/
+	
 	//Test 6: SOLVE
 	newjoints=new double[HEIGHT];
-/*	
+
 	cout << "Test 6: SOLVE" << endl;
 	newjoints = SOLVE(test_joint, test_matrix);
 
@@ -140,7 +140,7 @@ int main() {
 	}
 	cout << endl << endl;
 	
-*/	
+
 	cout << "Test 6.1: SOLVE for  no solution" << endl;
 	//test for inavlid joint varaibles
 
@@ -472,7 +472,7 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 	while (i < 8) {
 		theta2 = findTheta2(Tmatrix, internal_joints[i][1]);
 		internal_joints[i][2]= theta2[0] * 180/PI;
-		printInternalMatrix(internal_joints);
+		//printInternalMatrix(internal_joints);
 
 	//Error Checking
 		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100 || theta2[2] == 0) {
@@ -481,7 +481,7 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 		}
 		i++;
 		internal_joints[i][2] = theta2[1] * 180/PI;
-		printInternalMatrix(internal_joints);
+		//printInternalMatrix(internal_joints);
 	//Error Checking
 		if (internal_joints[i][2] > 100 || internal_joints[i][2] < -100|| theta2[2]==0) {
 			internal_joints[i][0] = 0;
@@ -514,7 +514,6 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 
 	cout << "Found theta4" << endl;
 	printInternalMatrix(internal_joints);
-
 
 	
 	//**********Find the shortest distance if soltuon is valid********************
@@ -549,7 +548,6 @@ double* SOLVE(double*oldJoints, double** Tmatrix) {
 	//place results into output array
 	joints = new double[HEIGHT];
 
-	if (internal_joints[0][index]!=0)
 		for (int i = 0; i < HEIGHT; i++) {
 			joints[i] = internal_joints[index][i+1];
 		}
@@ -567,8 +565,8 @@ double* findTheta2(double **Tmatrix, double theta1) {
 	C2 =( cos(theta1)*Tmatrix[0][3] + Tmatrix[1][3] * sin(theta1)  - 195) / 142;
 
 	if (C2 == 1) {
-		theta2[0] = PI/2;
-		theta2[1] = -PI/2;
+		theta2[0] = 0;
+		theta2[1] = -PI;
 
 	}
 	else if (pow(C2, 2)>1) {
@@ -597,7 +595,7 @@ double *findTheta4(double **Tmatrix, double* oldJoints, double theta1, double th
 	theta4 = new double[3];
 	theta4[2] = 1;
 
-	if ((c + a) == 0) {
+	if ((int)(c + a) == 0) {
 		cout << "Degenerate case (c + a) == 0"<<endl;
 		theta4[0] = 2 * atan2(-a / b, 1);
 		theta4[1]= theta4[0];
