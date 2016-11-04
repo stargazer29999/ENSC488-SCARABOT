@@ -136,15 +136,13 @@ int main() {
 	newjoints=new double[HEIGHT];
 
 	cout << "Test 6: SOLVE" << endl;
-/*	newjoints = SOLVE(test_joint, test_matrix);
+	newjoints = SOLVE(test_joint, test_matrix);
 
 	cout << "the new joint values are:" << endl;
 	for (int x = 0; x<HEIGHT; x++) {
 		cout << newjoints[x] << "\t";
 	}
 	cout << endl << endl;
-	
-
 
 	test_user[0] = 25;		//j1
 	test_user[1] = 60;		// j2
@@ -172,7 +170,25 @@ int main() {
 	test_user[1] = -95;		// j2
 	test_user[2] = -101;		// j3
 	test_user[3] = 155;		// j4
-	*/
+	
+	test_matrix = WHERE(test_user);
+	for (int x = 0; x<HEIGHT; x++) {
+		for (int y = 0; y<WIDTH; y++) {
+			cout << test_matrix[x][y] << "\t";
+		}
+		cout << endl;
+	}
+	cout << endl << endl;
+
+	newjoints = SOLVE(test_joint, test_matrix);
+
+	cout << "the new joint values are:" << endl;
+	for (int x = 0; x<HEIGHT; x++) {
+		cout << newjoints[x] << "\t";
+	}
+	cout << endl << endl;
+
+
 	test_user[0] = 0;		//j1
 	test_user[1] = 85;		// j2
 	test_user[2] = -101;		// j3
@@ -196,7 +212,7 @@ int main() {
 	cout << endl << endl;
 
 
-/*
+
 	cout << "Test 6.1: SOLVE for  no solution" << endl;
 	//test for inavlid joint varaibles
 
@@ -265,7 +281,6 @@ int main() {
 	}
 	cout << endl << endl;
 	
-	*/
 	
 
 //PUT NOTHING HERE -BREAKPOINT
@@ -502,7 +517,6 @@ double** WHERE(double* joint) {
 double* SOLVE(double* oldJoints, double** Tmatrix) {
 
 	double* joints;
-//	double theta1, theta1_;
 	double* theta1;
 	double* theta2;
 	double* theta4;
@@ -528,7 +542,7 @@ double* SOLVE(double* oldJoints, double** Tmatrix) {
 	for (int i = 0; i < 8; i++) { //Intialize all solutions as valid
 		internal_joints[i][0] = 1;
 	}
-	cout << "Loaded with ones" << endl;
+//	cout << "Loaded with ones" << endl;
 	//printInternalMatrix(internal_joints);
 
 	
@@ -543,7 +557,7 @@ double* SOLVE(double* oldJoints, double** Tmatrix) {
 			//cout << "SOLVE_ERROR: Joint 3 limit "<<endl;
 		}
 	}
-	cout << "found d3" << endl;
+	//cout << "found d3" << endl;
 //	printInternalMatrix(internal_joints);
 
 	//******************Find value of Theta1********************************
@@ -598,7 +612,7 @@ double* SOLVE(double* oldJoints, double** Tmatrix) {
 		}
 	}
 	*/
-	cout << "Found theta1" << endl;
+	//cout << "Found theta1" << endl;
 	//printInternalMatrix(internal_joints);
 
 	//******************Find value of Theta2********************************
@@ -625,7 +639,7 @@ double* SOLVE(double* oldJoints, double** Tmatrix) {
 		i++;
 	};
 
-	cout << "Found theta2" << endl;
+	//cout << "Found theta2" << endl;
 	//printInternalMatrix(internal_joints);
 
 	//****************** Find value of Theta4 ******************
@@ -648,7 +662,7 @@ double* SOLVE(double* oldJoints, double** Tmatrix) {
 		i++;
 	};
 
-	cout << "Found theta4" << endl;
+	//cout << "Found theta4" << endl;
 //	printInternalMatrix(internal_joints);
 
 	
@@ -678,7 +692,7 @@ double* SOLVE(double* oldJoints, double** Tmatrix) {
 	}
 
 	if (noSolution && internal_joints[index][0] == 0) {
-		cout << "***** No Solution ever found do not set Device to run ********"<<endl;
+		cout << "** No Solution found do not set Device to run **"<<endl;
 	}
 
 	//place results into output array
@@ -768,31 +782,6 @@ double *findTheta1(double px,double py, double* oldJoints) {
 			}
 		}
 	}
-	
-	/*
-	if ((int)(c + a) == 0) {
-		//cout << "Degenerate case (c + a) == 0"<<endl;
-		theta1[0] = 2 * atan2(-a / b, 1);
-		theta1[1] = theta1[0];
-	}
-	else if (b == 0) {
-		//		cout << "Degenerate case"<<endl;
-		if ((char)c == 0) {
-			theta1[0] = oldJoints[0];
-			theta1[1] = oldJoints[0];
-			cout << "infinite solutions" << endl;
-		}
-		else {
-			cout << "no solution" << endl;
-			theta1[2] = 0;
-		}
-	}
-	else {
-		theta1[0] = 2 * atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1);
-		theta1[1] = 2 * atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1);
-	}
-	*/
-
 	return theta1;
 }
 
@@ -820,24 +809,6 @@ double* findTheta2(double temp, double theta1) {
 		theta2[1] = atan2(-sqrt(1 - c12*c12), c12)-theta1;
 	}
 	
-
-	/*C2 =( cos(theta1)*Tmatrix[0][3] + Tmatrix[1][3] * sin(theta1)  - 195) / 142;
-
-	if (C2 == 1) { //Degenerate case: 1
-		theta2[0] = 0;
-		theta2[1] = PI;
-
-	}
-	else if (pow(C2, 2)>1) { //Degenerate case: 2
-			theta2[3] = 0;
-			//cout << "ERROR: Joint 2 is not solvable No solution CHANGE code in GUI to Exit Program"<<endl; 
-
-	}
-	else {	
-		theta2[0] = atan2(sqrt((1 - C2*C2)), C2);
-		theta2[1] = atan2(-sqrt((1 - C2*C2)), C2);
-	}
-	*/
 	return theta2;
 }
 
@@ -904,30 +875,7 @@ double *findTheta4(double r01,double r11, double* oldJoints, double theta1, doub
 			}
 		}
 	}
-/*
-	if ((int)(c + a) == 0) {
-		//cout << "Degenerate case (c + a) == 0"<<endl;
-		theta4[0] = 2 * atan2(-a / b, 1);
-		theta4[1]= theta4[0];
-	}
-	else if (b == 0) {
-//		cout << "Degenerate case"<<endl;
-		if ((char)c == 0) {
-			theta4[0] = oldJoints[3];
-			theta4[1] = oldJoints[3];
-			cout << "infinite solutions" << endl;
-		}
-		else {
-			//cout << "no solution" << endl;
-			theta4[2] = 0;
-		}		
-	}
-	else {
-		theta4[0] = 2 * atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1);
-		theta4[1] = 2 * atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1);
 
-	}
-*/
 	return theta4;
 }
 
