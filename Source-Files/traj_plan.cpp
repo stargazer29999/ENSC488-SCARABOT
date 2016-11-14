@@ -84,7 +84,9 @@ double** traj_plan::calcSpline(double* joint, int numVia) {
 	case 1:  //Along with the START and GOAL vias there is ONE intermediate point
 		/* //V1 for 2 ptn case (start and goal)
 		v1 = 6 * (delta0 / (4 * h0) + h0*delta1 / (4 * h0*h0) + h1*delta0 / (4 * h0*h0) + delta1 / (4 * h0*h0));
-*/
+		
+		calcCoeff(yi, yi_1, vi, vi_1, hi) // what to do with this?
+		*/
 		break;
 	case 2:	//There are TWO intermediate points
 
@@ -99,5 +101,23 @@ double** traj_plan::calcSpline(double* joint, int numVia) {
 	default: //This should never happend
 		break;
 	}
+
 	return spline;
+}
+
+/* calcCoeff function:
+* Input: the joint values of two points the velocity at two points and the time difference (hi=ti_1-ti), where ti is real time (i.e tow)
+* Calculates the coefficents ai, bi, ci and di for a given vi value
+* Ouput: Coefficent values as 4x1 array;
+*/
+double* traj_plan::calcCoeff(double yi, double yi_1, double vi, double vi_1, double hi) {
+	 double coeff[4]; //ai bi ci di
+	 
+	 coeff[0] = yi;
+	 coeff[1] = vi*hi;
+	 coeff[2] = 3 * (yi_1 - yi) - 2 * vi - vi_1;
+	 coeff[3] = -2 * (yi_1 - yi) + vi*hi + vi_1*hi;
+
+
+	return coeff;
 }
