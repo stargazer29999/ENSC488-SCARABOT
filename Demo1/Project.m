@@ -53,7 +53,7 @@ Tb
 %get from frame 0 to frame 2
 Tab=Ta*Tb 
 disp('*** Using: sin(a + b) = sin(a)cos(b) + cos(a)sin(b) ***')
-disp('*** cos(a + b) = cos(a)cos(b) – sin(a)sin(b) ***')
+disp('*** cos(a + b) = cos(a)cos(b) â€“ sin(a)sin(b) ***')
 
 syms c12 s12
 Tab(1,1)=c12;
