@@ -1,8 +1,11 @@
+/* Traj_plan.cpp
+*This member class includes all the functions required to 
+*caluate and print a direcrete spline for a give set of frames
+*/
 
 #include "traj_plan.h"
 
 using namespace std;
-
 
 
 /* DiscreteTrajectory function:
@@ -84,9 +87,12 @@ double** traj_plan::calcSpline(double* joint, int numVia) {
 	case 1:  //Along with the START and GOAL vias there is ONE intermediate point
 		/* //V1 for 2 ptn case (start and goal)
 		v1 = 6 * (delta0 / (4 * h0) + h0*delta1 / (4 * h0*h0) + h1*delta0 / (4 * h0*h0) + delta1 / (4 * h0*h0));
-		
-		calcCoeff(yi, yi_1, vi, vi_1, hi) // what to do with this?
 		*/
+
+		coeff = calcCoeff(yi, yi_1, v1, vi_1, hi); // what to do with this? (yi, yi_1 are part of the 'joint' array
+		spline = calcDiscreteSpline(0, FINAL, RES, coeff);
+
+
 		break;
 	case 2:	//There are TWO intermediate points
 
@@ -118,6 +124,35 @@ double* traj_plan::calcCoeff(double yi, double yi_1, double vi, double vi_1, dou
 	 coeff[2] = 3 * (yi_1 - yi) - 2 * vi - vi_1;
 	 coeff[3] = -2 * (yi_1 - yi) + vi*hi + vi_1*hi;
 
-
 	return coeff;
+}
+
+
+/* calcDiscreteSpline function:
+* Input: the starting time of the spline (t0),the ending time of the spline (tf), the time resolution (timeRes), the coefficent values
+* Calculates the discrete values of joint, velocity and acceleration for the given time period
+* Ouput: along with the calculated values it outputs the time;
+*/
+
+double** traj_plan::calcDiscreteSpline(double t0, double tf, double timeRes, double* coeff) {		//KARA change Time Resolution to a consatant value
+	int t = t0;
+	int i = 0;
+
+	discreteSpline=new double*[(int)((tf - t0) / timeRes)];
+	for (int i = 0; i < (int)((tf - t0) / timeRes); i++) {
+		discreteSpline[i] = new double[WIDTH];
+	}
+
+	while (t <= tf) {				//Kara:is the last entry suposed to be at the final time or the one before?
+		discreteSpline[0][i] = t;
+		discreteSpline[1][i] = coeff[0] + coeff[1] * t + coeff[2] * t*t + coeff[3] * t*t*t;
+		discreteSpline[2][i] = coeff[1] + 2 * coeff[2] * t + 3 * coeff[3] * t*t;
+		discreteSpline[3][i] = 2 * coeff[2] + 6 * coeff[3] * t;
+
+		t + timeRes;
+		i++;
+	}
+
+	return discreteSpline;
+
 }
