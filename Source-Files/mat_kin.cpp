@@ -189,61 +189,6 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	double px = Tmatrix[0][3];
 	double py = Tmatrix[1][3];
 	double pz = Tmatrix[2][3];
-	double r01 = Tmatrix[1][0];
-	double r00 = Tmatrix[0][0];
-
-
-
-	double joint1[2];
-	double joint2[2];
-	double joint3;
-	double joint4;
-	
-	double A;
-	double r;
-	double gamma;
-
-	joints = new double*[HEIGHT];
-	for (int i = 0; i < HEIGHT; i++) {
-		joints[i] = new double[WIDTH];
-	}
-	joints[3][3] = 1;
-
-	//theta2 = findTheta2(px,py, theta1[0], theta1[1]);	
-	A = (px*px + py*py - 142*142 - 195*195)/ (2 * 195 * 142);
-	if (A*A > 1) {
-		cout << "no solution" << endl;
-		joints[3][3] = 0;
-	}
-	joint2[0] = -atan2(sqrt(1 - A*A), A);
-	joint2[1] = -atan2(-sqrt(1 - A*A), A);
-
-			
-	//theta1 = findTheta1(px, py, oldJoints[1]);
-	for (int i = 0; i < 2; i++) {
-		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));
-		gamma = atan2(142 * sin(joint2[i]) / r, (195 + 142 * cos(joint2[i])) / r);
-		joint1[i] = atan2(py / r, px / r) - gamma;
-	}
-
-	joint3 = -pz - 480;															//Find value of d3
-	//joint3 =-195-pz;
-	//theta4 = findTheta4(r01, r11, oldJoints[3], joint1[0], joint2[0]);			//Find value of Theta4
-	joint4 = joint1[0] + joint2[0]- atan2(r01, r00);
-
-
-	joint1[0] = joint1[0] * 180 / PI;
-	joint1[1] = joint1[1] * 180 / PI;
-
-	joint2[0] = joint2[0] * 180 / PI;
-	joint2[1] = joint2[1] * 180 / PI;
-
-	joint4 = joint4 * 180 / PI;
-
-double **joints;
-	double px = Tmatrix[0][3];
-	double py = Tmatrix[1][3];
-	double pz = Tmatrix[2][3];
 	double r10 = Tmatrix[1][0];
 	double r00 = Tmatrix[0][0];
 
