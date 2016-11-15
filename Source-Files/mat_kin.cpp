@@ -142,50 +142,44 @@ double** mat_kin::TINVERT(double** internal_form)
 double** mat_kin::WHERE(double* joint)
 {
 
-		the1 = joint[0] * (PI / 180);
-		the2 = joint[1] * (PI / 180);
-		d3 = joint[2];
-		the4 = joint[3] * (PI / 180);
+	the1 = joint[0] * (PI / 180);
+	the2 = joint[1] * (PI / 180);
+	d3 = joint[2];
+	the4 = joint[3] * (PI / 180);
 
-		internal_form[0][0] = cos(the4 - the1 - the2);
-			//cos(the4)*(cos(the1)*cos(the2) - sin(the1)*sin(the2)) + sin(the4)*(cos(the1)*sin(the2) + cos(the2)*sin(the1));
-		//sin(the4)*sin(the1 + the2) - cos(the4)*cos(the1 + the2);
-		//In test example this is cos(the1 + the2 +the4)
-		// 
+	//internal_form[0][0] = cos(the4 - the1 - the2);
+	internal_form[0][0] = cos(the1 + the2 - the4);
 
-		internal_form[0][1] = sin(the4 - the1 - the2);
-			//cos(the4)*(cos(the1)*sin(the2) + cos(the2)*sin(the1)) - sin(the4)*(cos(the1)*cos(the2) - sin(the1)*sin(the2));
-		//  sin(the1 + the2 + the4); 		//WRONG
+	//internal_form[0][1] = sin(the4 - the1 - the2);
+	internal_form[0][1] = sin(the1 + the2 - the4);
 
-		internal_form[0][2] = 0;
-		internal_form[0][3] = 195 * cos(the1) + 142 * cos(the1 + the2);		
+	internal_form[0][2] = 0;
+	internal_form[0][3] = 195 * cos(the1) + 142 * cos(the1 + the2);
 
-		internal_form[1][0] = -sin(the4- the1 -the2);
-			//cos(the4)*(cos(the1)*sin(the2) + cos(the2)*sin(the1)) - sin(the4)*(cos(the1)*cos(the2) - sin(the1)*sin(the2));
-		// -sin(the1 + the2 + the4);		//WRONG
+	//internal_form[1][0] = -sin(the4 - the1 - the2);
+	internal_form[1][0] = sin(the1 + the2 - the4);
 
-		internal_form[1][1] = cos(the4 - the1 - the2);
-		//	-cos(the4)*(cos(the1)*cos(the2) - sin(the1)*sin(the2)) - sin(the4)*(cos(the1)*sin(the2) + cos(the2)*sin(the1));
-		//	sin(the4)*sin(the1 + the2) - cos(the4)*cos(the1 + the2); 	//WRONG
-		//In test example this is cos(the1 + the2 +the4)
+	//internal_form[1][1] = cos(the4 - the1 - the2);
+	internal_form[1][1] = cos(the1 + the2 - the4);
 
-		internal_form[1][2] = 0;
-		internal_form[1][3] = 195 * sin(the1) + 142 * sin(the1+the2);
+	internal_form[1][2] = 0;
+	internal_form[1][3] = 195 * sin(the1) + 142 * sin(the1 + the2);
 
-		internal_form[2][0] = 0;
-		internal_form[2][1] = 0;
-		internal_form[2][2] = -1;
-		internal_form[2][3] = -d3 - 480;
+	internal_form[2][0] = 0;
+	internal_form[2][1] = 0;
+	internal_form[2][2] = -1;
+	internal_form[2][3] = -d3 - 480;
 
-		internal_form[3][0] = 0;
-		internal_form[3][1] = 0;
-		internal_form[3][2] = 0;
-		internal_form[3][3] = 1;
+	internal_form[3][0] = 0;
+	internal_form[3][1] = 0;
+	internal_form[3][2] = 0;
+	internal_form[3][3] = 1;
 
-		//Transform to user_form;
-		//user_form = ITOU(internal_form);
+	//Transform to user_form;
+	//user_form = ITOU(internal_form);
 
-		return internal_form;
+	return internal_form;
+
 	
 }
 
@@ -246,6 +240,63 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 
 	joint4 = joint4 * 180 / PI;
 
+double **joints;
+	double px = Tmatrix[0][3];
+	double py = Tmatrix[1][3];
+	double pz = Tmatrix[2][3];
+	double r10 = Tmatrix[1][0];
+	double r00 = Tmatrix[0][0];
+
+
+
+	double joint1[2];
+	double joint2[2];
+	double joint3;
+	double joint4[2];
+
+	double A;
+	double r;
+	double gamma;
+
+	joints = new double*[HEIGHT];
+	for (int i = 0; i < HEIGHT; i++) {
+		joints[i] = new double[WIDTH];
+	}
+	joints[3][3] = 1;
+
+	//theta2 = findTheta2(px,py, theta1[0], theta1[1]);	
+	A = (px*px + py*py - 142 * 142 - 195 * 195) / (2 * 195 * 142);
+	if (A*A > 1) {
+		cout << "no solution" << endl;
+		joints[3][3] = 0;
+	}
+	joint2[0] = -atan2(sqrt(1 - A*A), A);
+	joint2[1] = -atan2(-sqrt(1 - A*A), A);
+
+
+	//theta1 = findTheta1(px, py, oldJoints[1]);
+	for (int i = 0; i < 2; i++) {
+		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));
+		gamma = atan2(142 * sin(joint2[i]) / r, (195 + 142 * cos(joint2[i])) / r);
+		joint1[i] = atan2(py / r, px / r) - gamma;
+	}
+
+	joint3 = -pz - 480;															//Find value of d3
+	//joint3 =-195-pz;
+	//theta4 = findTheta4(r01, r11, oldJoints[3], joint1[0], joint2[0]);			//Find value of Theta4
+	
+	joint4[0] = joint1[0] + joint2[0] - atan2(r10, r00);
+	joint4[1] = joint1[1] + joint2[1] - atan2(r10, r00);
+
+	joint1[0] = joint1[0] * 180 / PI;
+	joint1[1] = joint1[1] * 180 / PI;
+
+	joint2[0] = joint2[0] * 180 / PI;
+	joint2[1] = joint2[1] * 180 / PI;
+
+	joint4[0] = (joint4[0] * 180 / PI);
+	joint4[1] = (joint4[1] * 180 / PI);
+
 
 	//** Error Checking **
 	if ((joint1[0] > 150 || joint1[0] < -150) && (joint1[1] > 150 || joint1[1] < -150)) {
@@ -260,7 +311,7 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 		cout << "SOLVE_ERROR: Joint 3 limit " << endl << endl;
 		joints[3][3] = 0;
 	}
-	if (joint4 > 160 || joint4 < -160) {
+	if ((joint4[0] > 160 || joint4[0] < -160) && (joint4[1] >160 || joint4[1] < -160)){
 		cout << "SOLVE_ERROR: joint4  limit " << endl << endl;
 		joints[3][3] = 0;
 	}
@@ -272,7 +323,8 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	joints[0][1] = joint2[0];
 	joints[1][1] = joint2[1];
 	joints[0][2] = joint3;
-	joints[0][3] = joint4;
+	joints[0][3] = joint4[0];
+	joints[1][3] = joint4[1];
 
 	return joints;
 }
