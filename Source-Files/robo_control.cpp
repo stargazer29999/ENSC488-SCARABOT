@@ -61,7 +61,7 @@ void robo_control::moveJOINT()
 	r_matrix = cmd.WHERE(user_form);
 	cmd.printMatrix(r_matrix,HEIGHT,WIDTH);
 
-	cout << "The Cartesian coordiantes are :  x=" << (int)r_matrix[0][3] << " y=" << (int)r_matrix[1][3] << "  z=" << (int)r_matrix[2][3] << " PHI=" << (int)(acos(r_matrix[0][0]) * 180 / PI) << endl;
+	cout << "The Cartesian coordiantes are :  x=" << (int)r_matrix[0][3] << " y=" << (int)r_matrix[1][3] << "  z=" << (int)r_matrix[2][3] << " PHI=" << (int)(user_form[0]+user_form[1]-user_form[3]) << endl;
 
 	//Error 
 	if (!cmd.errorFound(user_form, 1)) {
@@ -113,8 +113,7 @@ void robo_control::currentCartesian()
 	JOINT q0;
 	GetConfiguration(q0);
 	r_matrix = cmd.WHERE(q0);
-
-	cout << "The Cartesian coordiantes are :  x= " << r_matrix[0][3] << " y= " << r_matrix[1][3] << " z= " << r_matrix[2][3] << " PHI= " <<(int)( atan2(r_matrix[1][3], r_matrix[0][3]) * 180 / PI);
+	cout << "The Cartesian coordiantes are :  x= " << r_matrix[0][3] << " y= " << r_matrix[1][3] << " z= " << r_matrix[2][3] << " PHI= " << (q0[0]+q0[1]-q0[3]);
 }
 
 void robo_control::zeroPosition()
@@ -150,10 +149,33 @@ void robo_control::moveCart()
 		cout << "===========================================" << endl;
 	}
 	else {
+double dist[2] = { 0, 0 };
+	cout << "Please input the desired Cartersian position (as a list): ";// << endl;
+	cin >> user_form[0] >> user_form[1] >> user_form[2] >> user_form[3];
+	cout << endl;
 
-		cout<<"Two  Solutions" << endl;
+	JOINT q0;
+	GetConfiguration(q0);
+
+	r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
+
+	if (r_matrix[3][3] == 0){
+		JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[0][3] };
+		cout << "** No Valid Solution found **" << endl;
+
 		cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+
+		cout << "===========================================" << endl;
+		cout << "Forward Kinematics from WHERE(): " << endl;
+		cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+		cout << "===========================================" << endl;
+	}
+	else {
+
+		cout << "Two  Solutions" << endl;
+		cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
 
 		if (r_matrix[0][0] != r_matrix[1][0]) {
 			cout << "Two different solutions: ";
@@ -161,11 +183,11 @@ void robo_control::moveCart()
 			//sum the metric distances
 			for (int i = 0; i < 2; i++) {
 				for (int j = 0; j < 4; j++) {
-					dist[i]+=abs(q0[j] - r_matrix[i][j]);
+					dist[i] += abs(q0[j] - r_matrix[i][j]);
 				}
 			}
 			if (dist[0] > dist[1]) {
-				JOINT q1 = { r_matrix[0][0], r_matrix[0][1] ,r_matrix[0][2], r_matrix[0][3] };
+				JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
 				MoveToConfiguration(q1, false);
 				cout << "Solution 1 is a shorter distance away" << endl;
 				cout << "===========================================" << endl;
@@ -174,7 +196,7 @@ void robo_control::moveCart()
 				cout << "===========================================" << endl;
 			}
 			else {
-				JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[0][3] };
+				JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[1][3] };
 				MoveToConfiguration(q1, false);
 				cout << "Solution 2 is a shorter distance away " << endl;
 				cout << "===========================================" << endl;
@@ -186,6 +208,7 @@ void robo_control::moveCart()
 		else {
 			JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
 			MoveToConfiguration(q1, false);
+			cout << "Solution 1 & 2 are the same" << endl;
 			cout << "===========================================" << endl;
 			cout << "Forward Kinematics from WHERE(): " << endl;
 			cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
