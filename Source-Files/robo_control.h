@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <string>
 #include <cmath>
+#include <ctime>
 #include "mat_kin.h"
 #include "ensc-488.h"
 #include "traj_plan.h"
@@ -38,6 +39,7 @@ private:
 	char grip;
 	double** via;
 	double*** traj;
+	int ii;
 
 
 public:
