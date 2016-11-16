@@ -192,16 +192,12 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	double r10 = Tmatrix[1][0];
 	double r00 = Tmatrix[0][0];
 
-
-
 	double joint1[2];
 	double joint2[2];
 	double joint3;
 	double joint4[2];
 
-	double A;
-	double r;
-	double gamma;
+	double A,B,C, r, gamma;
 
 	joints = new double*[HEIGHT];
 	for (int i = 0; i < HEIGHT; i++) {
@@ -221,9 +217,18 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 
 	//theta1 = findTheta1(px, py, oldJoints[1]);
 	for (int i = 0; i < 2; i++) {
-		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));
-		gamma = atan2(142 * sin(joint2[i]) / r, (195 + 142 * cos(joint2[i])) / r);
-		joint1[i] = atan2(py / r, px / r) - gamma;
+		B = 195 + 142 * cos(joint2[i]);
+		C = 142 * sin(joint2[i]);
+		r = sqrt(pow(B, 2) + pow(C, 2));
+		if ((B == 0 && C == 0)|| r == 0 ) {
+			cout << "no solution" << endl;
+			joints[3][3] = 0;
+		}
+		else {
+			gamma = atan2(B / r, C / r);
+			joint1[i] = atan2(py / r, px / r) - gamma;
+		}
+
 	}
 
 	joint3 = -pz - 480;															//Find value of d3
@@ -242,7 +247,7 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	joint4[0] = (joint4[0] * 180 / PI);
 	joint4[1] = (joint4[1] * 180 / PI);
 
-
+	/*
 	//** Error Checking **
 	if ((joint1[0] > 150 || joint1[0] < -150) && (joint1[1] > 150 || joint1[1] < -150)) {
 		cout << "SOLVE_ERROR: joint 1 limit " << endl << endl;
@@ -260,7 +265,7 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 		cout << "SOLVE_ERROR: joint4  limit " << endl << endl;
 		joints[3][3] = 0;
 	}
-
+	*/
 	//place results into output array
 
 	joints[0][0] = joint1[0];
@@ -268,146 +273,17 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	joints[0][1] = joint2[0];
 	joints[1][1] = joint2[1];
 	joints[0][2] = joint3;
+	joints[1][2] = joint3;
 	joints[0][3] = joint4[0];
 	joints[1][3] = joint4[1];
 
+	//** Error Checking **
+	if (errorFound(joints[0], 1) && errorFound(joints[1], 1)) {
+		joints[3][3] = 0;
+	}
+
+
 	return joints;
-}
-/*Function: findTheta1
-* Inputs the transformation matrix from {0} to {5}, the previous joint values
-* and Ouputs the possible solutions of theta1 and a flag to verfy that there is a soltuion
-*/
-double* mat_kin::findTheta1(double px, double py, double oldJoint1)
-{
-	double* theta1;
-	double a, b, c, d;
-
-	a = px;
-	b = py;
-	c = (a*a + b*b + 17861) / 390;
-	d = sqrt(b*b - c*c + a*a);
-
-	theta1 = new double[3];
-	theta1[2] = 1;
-
-	if ((c + a) == 0) { 
-		theta1[0] = 2 * atan2(-a / b, 1);
-		theta1[1] = theta1[0];
-	}
-	else if (a == 0 && c > 0) {
-		theta1[0] = PI / 2;
-		theta1[1] = theta1[0];
-	}
-	else if (a == 0 && c < 0) {
-		theta1[0] = -PI / 2;
-		theta1[1] = theta1[0];
-	}
-	else if (b == 0) {
-		if ((int)c == 0) {
-			theta1[0] = oldJoint1;
-			theta1[1] = oldJoint1;
-			cout << "infinite solutions" << endl;
-		}
-		else {
-			cout << "no solution" << endl;
-			theta1[2] = 0;
-		}
-	}
-	else {
-		theta1[0] = 2 * atan2((b + d) / (c + a), 1);
-		theta1[1] = 2 * atan2((b - d) / (c + a), 1);
-	}
-
-
-	return theta1;
-}
-
-
-/*Function: findTheta2
-* Input the transformation matrix from {0} to {5} and the value of theta1
-* the function Outputs the two possible values of theta2 and a flag to verfy that they are valid calculation wise (no joint limits are calculated here)
-*/
-double* mat_kin::findTheta2(double px, double py, double theta1_1, double theta1_2) {
-
-	double C2;	//simply cosine(theta2)
-	double* theta2;
-
-	theta2 = new double[3];
-	C2 = (cos(theta1_1)*px + py*sin(theta1_1) - 195) / 142;
-
-	if (C2 == 0)
-	{
-		theta2[0] = PI / 2;
-		theta2[1] = theta2[0];
-	}
-	else if (pow(C2, 2)>1) {
-		cout << "ERROR: Joint 2 is not solvable"<<endl; 
-	}
-	/* else if(C2 == 1) {
-	theta2[0] = 0;
-	theta2[1] = PI;
-	}
-	*/
-	else if (C2 > 0) {
-		theta2[0] = atan2(sqrt((1 - C2*C2)), C2);
-		theta2[1] = atan2(-sqrt((1 - C2*C2)), C2);
-	}
-	else if (C2 < 0) {
-		theta2[0] = atan2(sqrt((1 - C2*C2)), C2) + PI;
-		theta2[1] = atan2(sqrt((1 - C2*C2)), C2) - PI;
-
-	}
-
-	return theta2;
-}
-
-
-/*Function: findTheta4
-* Inputs the transformation matrix from {0} to {5}, the previous joint values, the values of theta1 and theta2
-* and Ouputs the possible solutions of theta4 and a flag to verfy that there is a soltuion
-*/
-double* mat_kin::findTheta4(double r01, double r11, double oldJoint4, double theta1, double theta2) {
-	
-	double* theta4;
-	double a, b, c, d;
-
-	c = cos(theta1)*r01 + r11 * sin(theta1);
-	a = sin(theta2);
-	b = cos(theta2);
-	d = sqrt(b*b - c*c + a*a);
-
-	theta4 = new double[3];
-	theta4[2] = 1;
-
-
-	if ((c + a) == 0) { //cout << "Degenerate case (c + a) == 0"<<endl;
-		theta4[0] = 2 * atan2(-a / b, 1);
-		theta4[1] = theta4[0];
-	}
-	else if (a == 0 && c > 0) {
-		theta4[0] = PI / 2;
-		theta4[1] = theta4[0];
-	}
-	else if (a == 0 && c < 0) {
-		theta4[0] = -PI / 2;
-		theta4[1] = theta4[0];
-	}
-	else if (b == 0) {
-		if ((int)c == 0) {
-			theta4[0] = oldJoint4;
-			theta4[1] = oldJoint4;
-			cout << "infinite solutions" << endl;
-		}
-		else {
-			theta4[2] = 0;
-		}
-	}
-	else {
-		theta4[0] = 2 * atan2((b + d) / (c + a), 1);
-		theta4[1] = 2 * atan2((b - d) / (c + a), 1);
-	}
-
-	return theta4;
 }
 
 /*Function: printInternalMatrix
