@@ -197,7 +197,7 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	double joint3;
 	double joint4[2];
 
-	double A,B,C, r, gamma;
+	double A, r, gamma;
 
 	joints = new double*[HEIGHT];
 	for (int i = 0; i < HEIGHT; i++) {
@@ -215,17 +215,17 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	joint2[1] = -atan2(-sqrt(1 - A*A), A);
 
 
+
+	
 	//theta1 = findTheta1(px, py, oldJoints[1]);
 	for (int i = 0; i < 2; i++) {
-		B = 195 + 142 * cos(joint2[i]);
-		C = 142 * sin(joint2[i]);
-		r = sqrt(pow(B, 2) + pow(C, 2));
-		if ((B == 0 && C == 0)|| r == 0 ) {
+		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));
+		if ( r == 0 ) {
 			cout << "no solution" << endl;
 			joints[3][3] = 0;
 		}
 		else {
-			gamma = atan2(B / r, C / r);
+			gamma = atan2(142 * sin(joint2[i]) / r, (195 + 142 * cos(joint2[i])) / r);
 			joint1[i] = atan2(py / r, px / r) - gamma;
 		}
 
