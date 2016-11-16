@@ -39,9 +39,9 @@ public:
 	double** TINVERT(double** internal_form);
 	double** WHERE(double* joint);
 	double** SOLVE(double* oldJoints, double** Tmatrix);
-	double* findTheta1(double px, double py, double oldJoint1);
-	double* findTheta2(double px, double py, double theta1_1, double theta1_2);
-	double* findTheta4(double r01, double r11, double oldJoint4, double theta1, double theta2);
+	//double* findTheta1(double px, double py, double oldJoint1);
+	//double* findTheta2(double px, double py, double theta1_1, double theta1_2);
+	//double* findTheta4(double r01, double r11, double oldJoint4, double theta1, double theta2);
 	//void printInternalMatrix(double **matrix);
 	void printMatrix(double** matrix, int height, int width);
 	bool errorFound(double *values, int selection);
