@@ -13,15 +13,7 @@
 #include "mat_kin.h"
 
 #define WIDTH 4
-#define TIME 999 	// the final time divided by the time resolution NOTE:if 999 or -999 that is a placeholder a value
 #define RES 10	// the time resolution
-//#define FINAL -999	// the final time 
-
-
-//#define revolMaxVel  [-150 150]
-//#define prismMaxVel [-50 50]
-#define revolMaxAcc	[-600 600]
-#define prismMaxAcc [-200 200]
 
 class traj_plan
 {
@@ -34,16 +26,19 @@ private:
 	double** temp; //temperary variable to store spline results before moving it into 'spline
 	
 	double* coefficient; // this is not the same value a coeff
-	double* tau; //Kara; not actually used since user specifies the timing
-	double* t;
+	double* tau; 
+	double* time;
+	double* joint;
+
+	double t;
+	int ii;
 
 	double h_0, h_1, h_2, h_3;
 	double h_4; //time btw. last via and goal?
 	double delta0, delta1, delta2, delta3;
 	double v1, v2, v3, v4;
 	double deltaT;
-	double* time;
-	double* joint;
+	
 
 	int vi_1;
 	int steps;
