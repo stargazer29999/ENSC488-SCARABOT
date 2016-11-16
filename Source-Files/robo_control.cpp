@@ -300,8 +300,8 @@ void robo_control::trajectoryPlan() {
 	//end of comment out section
 
 	//Move to the Starting point
-	JOINT q0 = { via[0][0],via[0][1],via[0][2],via[0][3] };
-	MoveToConfiguration(q0, false);
+	JOINT q1 = { via[0][0], via[0][1], via[0][2], via[0][3] };
+	MoveToConfiguration(q1, false);
 
 
 	//Call trajectory planning function -> change to return something
