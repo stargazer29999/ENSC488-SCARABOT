@@ -15,7 +15,9 @@
 #define WIDTH 4
 #define TIME 999 	// the final time divided by the time resolution NOTE:if 999 or -999 that is a placeholder a value
 #define RES 10	// the time resolution
-#define FINAL -999	// the final time 
+//#define FINAL -999	// the final time 
+
+
 //#define revolMaxVel  [-150 150]
 //#define prismMaxVel [-50 50]
 #define revolMaxAcc	[-600 600]
@@ -24,26 +26,37 @@
 class traj_plan
 {
 private:
-	double joint[5];
 	double*** Output;
 	double** spline;
-	double** coeff;
-	double* coefficient; // this is not the same value a coeff
+	//double** coeff;
+	double* coeff;
 	double** discreteSpline;
+	double** temp; //temperary variable to store spline results before moving it into 'spline
+	
+	double* coefficient; // this is not the same value a coeff
+	double* tau; //Kara; not actually used since user specifies the timing
+	double* t;
+
 	double h_0, h_1, h_2, h_3;
 	double h_4; //time btw. last via and goal?
 	double delta0, delta1, delta2, delta3;
 	double v1, v2, v3, v4;
-	double* tau;
 	double deltaT;
+	double* time;
+	double* joint;
+
 	int vi_1;
+	int steps;
 
 public:
+	traj_plan();
 	double*** discreteTrajectory(double** viaPoints, int numVia);
-	void traj_plan::printTrajectory(string filename, double** jointValues);
+	void traj_plan::printTrajectory(string filename, double** jointValues, int steps);
 	double** traj_plan::calcSpline(double* joint, int numVia, int i, double* time);
 	double* traj_plan::calcCoeff(double yi, double yi_1, double vi, double vi_1, double hi);
 	double** traj_plan::calcDiscreteSpline(double t0, double tf, double* coeff );
+
+	void traj_plan::printM(double** matrix, int height, int width); //Kara: please remove once code is complete
 
 };
 
