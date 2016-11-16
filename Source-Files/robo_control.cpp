@@ -41,9 +41,9 @@ robo_control::robo_control()
 	vect_5 = new double[5];
 
 
-	via = new double*[HEIGHT+1]; //make a 5x4 (row x col)
+	via = new double*[HEIGHT+1]; //make a 5x5 (row x col)
 	for (int i = 0; i < (HEIGHT+1); i++) {
-		via[i] = new double[WIDTH];
+		via[i] = new double[WIDTH+1];
 	}
 }
 
@@ -128,29 +128,6 @@ void robo_control::moveCart()
 {
 	double dist[2] = { 0,0 };
 	cout << "Please input the desired Cartersian position (as a list): ";// << endl;
-	cin >> user_form[0] >> user_form[1] >> user_form[2]>> user_form[3];
-	cout << endl;
-
-	JOINT q0;
-	GetConfiguration(q0);
-
-	r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
-
-	if(r_matrix[3][3]==0){
-		JOINT q1 = { r_matrix[1][0], r_matrix[1][1] ,r_matrix[0][2], r_matrix[0][3] };
-		cout << "** No Valid Solution found **" << endl;
-
-		cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1]  << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1]  << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-
-		cout << "===========================================" << endl;
-		cout << "Forward Kinematics from WHERE(): " << endl;
-		cmd.printMatrix(cmd.WHERE(q1),HEIGHT, WIDTH);
-		cout << "===========================================" << endl;
-	}
-	else {
-double dist[2] = { 0, 0 };
-	cout << "Please input the desired Cartersian position (as a list): ";// << endl;
 	cin >> user_form[0] >> user_form[1] >> user_form[2] >> user_form[3];
 	cout << endl;
 
@@ -159,12 +136,12 @@ double dist[2] = { 0, 0 };
 
 	r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
 
-	if (r_matrix[3][3] == 0){
-		JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[0][3] };
+	if (r_matrix[3][3] == 0) {
+		JOINT q1 = { r_matrix[1][0], r_matrix[1][1] ,r_matrix[0][2], r_matrix[0][3] };
 		cout << "** No Valid Solution found **" << endl;
 
 		cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
 
 		cout << "===========================================" << endl;
 		cout << "Forward Kinematics from WHERE(): " << endl;
@@ -173,49 +150,74 @@ double dist[2] = { 0, 0 };
 	}
 	else {
 
-		cout << "Two  Solutions" << endl;
-		cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+		double dist[2] = { 0, 0 };
+		cout << "Please input the desired Cartersian position (as a list): ";// << endl;
+		cin >> user_form[0] >> user_form[1] >> user_form[2] >> user_form[3];
+		cout << endl;
 
-		if (r_matrix[0][0] != r_matrix[1][0]) {
-			cout << "Two different solutions: ";
-			//Find the shortest distance if solution is valid
-			//sum the metric distances
-			for (int i = 0; i < 2; i++) {
-				for (int j = 0; j < 4; j++) {
-					dist[i] += abs(q0[j] - r_matrix[i][j]);
-				}
-			}
-			if (dist[0] > dist[1]) {
-				JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
-				MoveToConfiguration(q1, false);
-				cout << "Solution 1 is a shorter distance away" << endl;
-				cout << "===========================================" << endl;
-				cout << "Forward Kinematics from WHERE(): " << endl;
-				cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
-				cout << "===========================================" << endl;
-			}
-			else {
-				JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[1][3] };
-				MoveToConfiguration(q1, false);
-				cout << "Solution 2 is a shorter distance away " << endl;
-				cout << "===========================================" << endl;
-				cout << "Forward Kinematics from WHERE(): " << endl;
-				cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
-				cout << "===========================================" << endl;
-			}
-		}
-		else {
-			JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
-			MoveToConfiguration(q1, false);
-			cout << "Solution 1 & 2 are the same" << endl;
+		JOINT q0;
+		GetConfiguration(q0);
+
+		r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
+
+		if (r_matrix[3][3] == 0) {
+			JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[0][3] };
+			cout << "** No Valid Solution found **" << endl;
+
+			cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+			cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+
 			cout << "===========================================" << endl;
 			cout << "Forward Kinematics from WHERE(): " << endl;
 			cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
 			cout << "===========================================" << endl;
 		}
+		else {
+
+			cout << "Two  Solutions" << endl;
+			cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+			cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+
+			if (r_matrix[0][0] != r_matrix[1][0]) {
+				cout << "Two different solutions: ";
+				//Find the shortest distance if solution is valid
+				//sum the metric distances
+				for (int i = 0; i < 2; i++) {
+					for (int j = 0; j < 4; j++) {
+						dist[i] += abs(q0[j] - r_matrix[i][j]);
+					}
+				}
+				if (dist[0] > dist[1]) {
+					JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
+					MoveToConfiguration(q1, false);
+					cout << "Solution 1 is a shorter distance away" << endl;
+					cout << "===========================================" << endl;
+					cout << "Forward Kinematics from WHERE(): " << endl;
+					cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+					cout << "===========================================" << endl;
+				}
+				else {
+					JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[1][3] };
+					MoveToConfiguration(q1, false);
+					cout << "Solution 2 is a shorter distance away " << endl;
+					cout << "===========================================" << endl;
+					cout << "Forward Kinematics from WHERE(): " << endl;
+					cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+					cout << "===========================================" << endl;
+				}
+			}
+			else {
+				JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
+				MoveToConfiguration(q1, false);
+				cout << "Solution 1 & 2 are the same" << endl;
+				cout << "===========================================" << endl;
+				cout << "Forward Kinematics from WHERE(): " << endl;
+				cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+				cout << "===========================================" << endl;
+			}
+		}
+
 	}
-	
 }
 
 void robo_control::trajectoryPlan() {
@@ -228,19 +230,21 @@ void robo_control::trajectoryPlan() {
 	bool FAIL = false;
 
 
-	cout << "The desired START location (x,y,z, phi): ";
-	cin >> via[0][0] >> via[0][1] >> via[0][2] >> via[0][3];
+	cout << "The desired START location (x,y,z, phi) ";
+	cin >> via[0][0] >> via[0][1] >> via[0][2] >> via[0][3];// >> via[0][4];	//Kara: does the start frame acutally need a time?
+	via[0][4] = -999;
 
-	cout << "The desired GOAL location (x,y,z, phi): ";
-	cin >> via[4][0] >> via[4][1] >> via[4][2] >> via[4][3];
+
+	cout << "The desired GOAL location (x,y,z, phi) and time to travel in ms: ";
+	cin >> via[4][0] >> via[4][1] >> via[4][2] >> via[4][3] >> via[4][4];
 
 	cout << "How many intermediate locations (0, 1, 2, 3)? ";
 	cin >> numLocations;
 	if (numLocations != 0) {
-		for (int i=1; i<4; i++){  //three or foru?
+		for (int i = 1; i<4; i++){  //three or foru?
 			if (i <= numLocations) {
-				cout << "Please input the desired intermediate location (x,y,z, phi): ";
-				cin >> via[i][0] >> via[i][1] >> via[i][2] >> via[i][3];
+				cout << "Please input the desired intermediate location (x,y,z, phi) and time to travel in ms: : ";
+				cin >> via[i][0] >> via[i][1] >> via[i][2] >> via[i][3] >> via[i][4];
 				cout << endl;
 			}
 			else {
@@ -252,9 +256,9 @@ void robo_control::trajectoryPlan() {
 	}
 
 	//Comment out the follwoing section once the code works to save space
-	cout << "You have input the following location: " << endl;
-	cout << setw(15)<<"x"<<setw(15)<< "y"<< setw(15)<<"z"<< setw(15)<<"phi"<<endl;
-	cmd.printMatrix(via,(HEIGHT + 1), WIDTH);
+	cout << "You have input the following locations and time: " << endl;
+	cout << setw(15)<<"x"<<setw(15)<< "y"<< setw(15)<<"z"<< setw(15)<<"phi" << setw(15) << "time (ms)" << endl;
+	cmd.printMatrix(via,(HEIGHT + 1), (WIDTH+1));
 	//end of comment out section
 
 
@@ -289,8 +293,20 @@ void robo_control::trajectoryPlan() {
 			}
 		}
 	}
+	//Comment out the follwoing section once the code works to save space
+	cout << "You have input the following joint values and time to move to: " << endl;
+	cout << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << setw(15) << "phi" << setw(15) << "time (ms)"<< endl;
+	cmd.printMatrix(via, (HEIGHT + 1), WIDTH);
+	//end of comment out section
+
+	//Move to the Starting point
+	JOINT q0 = { via[0][0],via[0][1],via[0][2],via[0][3] };
+	MoveToConfiguration(q0, false);
+
+
 	//Call trajectory planning function -> change to return something
 	//traj, a matrix of __x__x_ which holds the values 
+	//ADD: start a timer
 	traj=cmd2.discreteTrajectory(via,numLocations);
 	for (int i = 0; i < TIME; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -309,9 +325,12 @@ void robo_control::trajectoryPlan() {
 			JOINT q1 = { traj[0][i][2], traj[2][i][2] , traj[3][i][2], traj[4][i][2] };
 			JOINT q2= { traj[0][i][3], traj[2][i][3] , traj[3][i][3], traj[4][i][3] };
 			MoveWithConfVelAcc(q0, q1, q2); //Kara Question: How to get the program to pause (time resoltuion delta t) before reading the next value?
+			//Pause here
 		}
 	}
-	
+	//ADD: end timer here and print result to compare to sum of input timer  values
 
 
 }
+
+
