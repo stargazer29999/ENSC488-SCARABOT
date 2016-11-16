@@ -115,7 +115,7 @@ double** traj_plan::calcSpline(double* joint, int numVia, int i, double *time /*
 		*/
 		break;
 	case 1:  //Along with the START and GOAL vias there is ONE intermediate point
-		int vi_1 = 0; //since the GOAL frame has zero velocity
+		vi_1 = 0; //since the GOAL frame has zero velocity
 	
 		 //V1 for 2 ptn case (start and goal)
 		delta0 = joint[1] - joint[0];
@@ -237,14 +237,14 @@ double** traj_plan::calcSpline(double* joint, int numVia, int i, double *time /*
 * Ouput: Coefficent values as 4x1 array;
 */
 double* traj_plan::calcCoeff(double yi, double yi_1, double vi, double vi_1, double hi) {
-	 double coeff[4]; //ai bi ci di
+	 coefficient= new double[4]; //ai bi ci di
 	 
-	 coeff[0] = yi;
-	 coeff[1] = vi*hi;
-	 coeff[2] = 3 * (yi_1 - yi) - 2 * vi - vi_1;
-	 coeff[3] = -2 * (yi_1 - yi) + vi*hi + vi_1*hi;
+	 coefficient[0] = yi;
+	 coefficient[1] = vi*hi;
+	 coefficient[2] = 3 * (yi_1 - yi) - 2 * vi - vi_1;
+	 coefficient[3] = -2 * (yi_1 - yi) + vi*hi + vi_1*hi;
 
-	return coeff;
+	return coefficient;
 }
 
 
@@ -274,7 +274,7 @@ double** traj_plan::calcDiscreteSpline(double t0, double tf,  double* coeff) {		
 		discreteSpline[2][i] = fmod(coeff[1] + 2 * coeff[2] * t + 3 * coeff[3] * t*t, 360); //Kara: do we need modulo 360 degree arithmatic for velocity?
 		discreteSpline[3][i] = 2 * coeff[2] + 6 * coeff[3] * t;
 
-		t + deltaT;
+		t=t + deltaT;
 		i++;
 	}
 
