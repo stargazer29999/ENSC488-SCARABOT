@@ -67,7 +67,22 @@ double*** traj_plan::discreteTrajectory(double** viaPoints, int numVia) {
 //end of comment out section
 
 		Output[i] = calcSpline(joint, numVia, i, time);
-	
+		
+		//Modulo 360 arithmatic
+		if (i == 0 || i == 1 || i == 3) {
+			ii = 0;
+			while ((ii <= (4 * RES)) && ((int)Output[i][ii][0] != 999)) {
+				Output[i][ii][1] = fmod(Output[i][ii][1], 360);
+				if (Output[i][ii][1] > 180) {		//changing values to the range [-180 180]
+					Output[i][ii][1] = Output[i][ii][1] - 360;
+				}
+				else if (Output[i][ii][1] < -180) {
+					Output[i][ii][1] = Output[i][ii][1] + 360;
+				}
+				ii++;
+			}
+		}
+		
 
 		cout << "Used for Debugging, joint "<< (i+1)<<endl;
 		cout << setw(12) << "time" << setw(12) << "joint val" << setw(12) << "velocity" << setw(12) << "accel" << endl;
@@ -148,6 +163,8 @@ double** traj_plan::calcSpline(double* joint, int numVia, int i, double *time){
 	case 0: //there is only the START and GOAL vias
 		//Use a  quanitic ploynomial instead use solution on page 214 of test book
 		
+
+		//KARA: this does not work!!!!!
 		coeff[0]= joint[0];
 		coeff[1]= (20* joint[4]-20* joint[0])/(2*pow(time[4],3));
 		coeff[2]=(30* joint[4]-30* joint[0])/(2*pow(time[4],4));
@@ -161,15 +178,8 @@ double** traj_plan::calcSpline(double* joint, int numVia, int i, double *time){
 		while (t <= time[4]) {				//Kara: the last entry suposed to be at the final time
 			spline[ii][0] = t;
 
-			spline[ii][1] = fmod(coeff[0]+coeff[1]*pow(t,3)+coeff[2]*pow(t,4)+coeff[3]*pow(t,5),360); //modulo 360 degree arithmatic to ensure angle is valid
-			if (spline[ii][1] > 180) {		//changing values to the range [-180 180]
-			spline[ii][1] = 180 - spline[ii][1];
-			}
-			else if (discreteSpline[ii][1] < -180) {
-				spline[ii][1] = spline[ii][1] + 180;
-			}
+			spline[ii][1] = coeff[0]+coeff[1]*pow(t,3)+coeff[2]*pow(t,4)+coeff[3]*pow(t,5); //modulo 360 degree arithmatic to ensure angle is valid
 			spline[ii][2] = 3*coeff[1]*pow(t,2)+4*coeff[2]*pow(t,3)+5*coeff[3]*pow(t,4);
-			
 			spline[ii][3] = 6*coeff[1]*t+12*coeff[2]*pow(t,2)+20*coeff[3]*pow(t,3);
 
 			t=t + deltaT;
@@ -377,13 +387,7 @@ double** traj_plan::calcDiscreteSpline(double t0, double tf,  double* coeff) {		
 	while (t <= tf) {				//Kara: the last entry suposed to be at the final time
 		discreteSpline[ii][0] = t;
 
-		discreteSpline[ii][1] = fmod(coeff[0] + coeff[1] * t + coeff[2] * t*t + coeff[3] * t*t*t,360); //modulo 360 degree arithmatic to ensure angle is valid
-		if (discreteSpline[ii][1] > 180) {		//changing values to the range [-180 180]
-			discreteSpline[ii][1] = 180 - discreteSpline[ii][1];
-		}
-		else if (discreteSpline[ii][1] < -180) {
-			discreteSpline[ii][1] = discreteSpline[ii][1]+180;
-		}
+		discreteSpline[ii][1] = coeff[0] + coeff[1] * t + coeff[2] * t*t + coeff[3] * t*t*t; //modulo 360 degree arithmatic to ensure angle is valid
 		discreteSpline[ii][2] = coeff[1] + 2 * coeff[2] * t + 3 * coeff[3] * t*t;
 		discreteSpline[ii][3] = 2 * coeff[2] + 6 * coeff[3] * t;
 
