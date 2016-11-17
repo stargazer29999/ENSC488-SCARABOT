@@ -148,80 +148,47 @@ void robo_control::moveCart()
 
 	r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
 
+	cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+	cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+
 	if (r_matrix[3][3] == 0) {
 		JOINT q1 = { r_matrix[1][0], r_matrix[1][1] ,r_matrix[0][2], r_matrix[0][3] };
 		cout << "** No Valid Solution found **" << endl;
+	}
+	else if (r_matrix[3][3] == 1) {
+		cout << "** First solution is not valid**" << endl;
+		cl = clock();   //starting time of clock
 
-		cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-		cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+		JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[1][3] };
+		//MoveToConfiguration(q1, false);
+		MoveToConfiguration(q1, true);
+		cl = clock() - cl;  //end point of clock
 
+		cout << "Solution 2 is chosen " << endl;
 		cout << "===========================================" << endl;
 		cout << "Forward Kinematics from WHERE(): " << endl;
 		cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
 		cout << "===========================================" << endl;
+
+	}
+	else if (r_matrix[3][3] == 2) {
+		cout << "** Second solution is not valid**" << endl;
+		cl = clock();   //starting time of clock
+
+		JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
+		//MoveToConfiguration(q1, false);
+		MoveToConfiguration(q1, true);
+		cl = clock() - cl;  //end point of clock
+
+		cout << "Solution 1 is chosen" << endl;
+		cout << "===========================================" << endl;
+		cout << "Forward Kinematics from WHERE(): " << endl;
+		cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+		cout << "===========================================" << endl;
+
 	}
 	else {
-
-		double dist[2] = { 0, 0 };
-		cout << "Please input the desired Cartersian position (as a list): ";// << endl;
-		cin >> user_form[0] >> user_form[1] >> user_form[2] >> user_form[3];
-		cout << endl;
-
-		JOINT q0;
-		GetConfiguration(q0);
-
-		r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
-
-		if (r_matrix[3][3] == 0) {
-			JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[0][3] };
-			cout << "** No Valid Solution found **" << endl;
-
-			cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-			cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
-
-			cout << "===========================================" << endl;
-			cout << "Forward Kinematics from WHERE(): " << endl;
-			cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
-			cout << "===========================================" << endl;
-		}
-		else if (r_matrix[3][3] == 1) {
-			cout << "** First solution is not valid**" << endl;
-			cl = clock();   //starting time of clock
-
-			JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[1][3] };
-			//MoveToConfiguration(q1, false);
-			MoveToConfiguration(q1, true);
-			cl = clock() - cl;  //end point of clock
-
-			cout << "Solution 2 is chosen " << endl;
-			cout << "===========================================" << endl;
-			cout << "Forward Kinematics from WHERE(): " << endl;
-			cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
-			cout << "===========================================" << endl;
-
-		}
-		else if (r_matrix[3][3] == 2) {
-			cout << "** Second solution is not valid**" << endl;
-			cl = clock();   //starting time of clock
-
-			JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
-			//MoveToConfiguration(q1, false);
-			MoveToConfiguration(q1, true);
-			cl = clock() - cl;  //end point of clock
-
-			cout << "Solution 1 is chosen" << endl;
-			cout << "===========================================" << endl;
-			cout << "Forward Kinematics from WHERE(): " << endl;
-			cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
-			cout << "===========================================" << endl;
-
-		}
-		else {
-
 			cout << "Two  Solutions" << endl;
-			cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-			cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
-
 			if (r_matrix[0][0] != r_matrix[1][0]) {
 				cout << "Two different solutions: ";
 				//Find the shortest distance if solution is valid
@@ -277,7 +244,7 @@ void robo_control::moveCart()
 			}
 		}
 
-	}
+	
 
 
 	cout << "It took "<<cl / (double)CLOCKS_PER_SEC<<" sec to move robot" << endl;  //prints the determined ticks per second (seconds passed)
