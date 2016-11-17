@@ -161,7 +161,7 @@ double** mat_kin::WHERE(double* joint)
 	internal_form[2][0] = 0;
 	internal_form[2][1] = 0;
 	internal_form[2][2] = -1;
-	internal_form[2][3] = d3 - 125;	//frame moved to base see demo1.m file (ask Caelan)s
+	internal_form[2][3] = 125-d3;	//frame moved to base see demo1.m file (ask Caelan)s
 										
 										// internal_form[2][3] = -d3 - 480;	//old versio
 	internal_form[3][0] = 0;
@@ -208,9 +208,17 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	joint2[0] = -atan2(sqrt(1 - A*A), A);
 	joint2[1] = -atan2(-sqrt(1 - A*A), A);
 
-
 	
 	//theta1 = findTheta1(px, py, oldJoints[1]);
+/*
+	double a = px;
+	double b = py;
+	double c = -px*px / 284 - py*py / 284 - 48107 / 142;
+
+	joint1[0] = 2 * atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1) - joint2[0];
+	joint1[1] = 2 * atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1) - joint2[1];
+
+*/
 	for (int i = 0; i < 2; i++) {
 		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));
 		if ( r == 0 ) {
@@ -218,15 +226,13 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 			joints[3][3] = 0;
 		}
 		else {
-			//gamma = atan2(142 * sin(joint2[i]) / r, (195 + 142 * cos(joint2[i])) / r);
-			gamma = atan(142 * sin(joint2[i]) / (195 + 142 * cos(joint2[i])));
-			//joint1[i] = atan2(py / r, px / r) - gamma;
-			joint1[i] = atan(py / px) - gamma;
+			gamma = atan2(142 * sin(joint2[i]) / r, (195 + 142 * cos(joint2[i])) / r);
+			joint1[i] = atan2(py / r, px / r) - gamma;
 		}
 
 	}
-
-	joint3 = pz + 125; //moved frame to base see demo1.m
+	
+	joint3 = -pz + 125; //moved frame to base see demo1.m
 
 
 	//joint3 = -pz - 480;		//old solution
