@@ -151,26 +151,24 @@ double** traj_plan::calcSpline(double* joint, int numVia, int i, double *time){
 		coeff[0]= joint[0];
 		coeff[1]= (20* joint[4]-20* joint[0])/(2*pow(time[4],3));
 		coeff[2]=(30* joint[4]-30* joint[0])/(2*pow(time[4],4));
-		coeff[3]=(12* joint[4]-12* joint[0])/(2*pow(time[4],5));
-		
+		coeff[3]=(12* joint[4]-12* joint[0])/(2*pow(time[4],5));		
 
 		t = 0;
 		ii = 0;
 
 		deltaT = (time[4]) / RES;
 
-
-		while (t <= time[4]) {				//Kara:is the last entry suposed to be at the final time or the one before?
+		while (t <= time[4]) {				//Kara: the last entry suposed to be at the final time
 			spline[ii][0] = t;
-			/* Without modulo 360 arithmatic
-			spline[ii][1] = coeff[0] + coeff[1] * pow(t, 3) + coeff[2] * pow(t, 4) + coeff[3] * pow(t, 5); //How to apply?modulo 360 degree arithmatic to ensure angle is valid
-			spline[ii][2] = 3 * coeff[1] * pow(t, 2) + 4 * coeff[2] * pow(t, 3) + 5 * coeff[3] * pow(t, 4); //Kara: do we need modulo 360 degree arithmatic for velocity?
-			*/
+
 			spline[ii][1] = fmod(coeff[0]+coeff[1]*pow(t,3)+coeff[2]*pow(t,4)+coeff[3]*pow(t,5),360); //modulo 360 degree arithmatic to ensure angle is valid
 			if (spline[ii][1] > 180) {		//changing values to the range [-180 180]
 			spline[ii][1] = 180 - spline[ii][1];
 			}
-			spline[ii][2] = fmod(3*coeff[1]*pow(t,2)+4*coeff[2]*pow(t,3)+5*coeff[3]*pow(t,4), 360); //Kara: do we need modulo 360 degree arithmatic for velocity?
+			else if (discreteSpline[ii][1] < -180) {
+				spline[ii][1] = spline[ii][1] + 180;
+			}
+			spline[ii][2] = 3*coeff[1]*pow(t,2)+4*coeff[2]*pow(t,3)+5*coeff[3]*pow(t,4);
 			
 			spline[ii][3] = 6*coeff[1]*t+12*coeff[2]*pow(t,2)+20*coeff[3]*pow(t,3);
 
@@ -282,7 +280,6 @@ double** traj_plan::calcSpline(double* joint, int numVia, int i, double *time){
 		delta2 = joint[3] - joint[2];
 		delta3 = joint[4] - joint[3];
 
-
 		h_0 = time[1];// tau[1] - tau[0];
 		h_1 = time[2];//tau[2] - tau[1];
 		h_2 = time[3];//tau[3] - tau[2];
@@ -377,18 +374,17 @@ double** traj_plan::calcDiscreteSpline(double t0, double tf,  double* coeff) {		
 	deltaT = (tf - t0) / RES;
 
 
-	while (t <= tf) {				//Kara:is the last entry suposed to be at the final time or the one before? t <= tf
+	while (t <= tf) {				//Kara: the last entry suposed to be at the final time
 		discreteSpline[ii][0] = t;
-		/* Without modulo 360 arithmatic
-		discreteSpline[ii][1] = coeff[0] + coeff[1] * t + coeff[2] * t*t + coeff[3] * t*t*t;
-		discreteSpline[ii][2] = coeff[1] + 2 * coeff[2] * t + 3 * coeff[3] * t*t;
-		*/
+
 		discreteSpline[ii][1] = fmod(coeff[0] + coeff[1] * t + coeff[2] * t*t + coeff[3] * t*t*t,360); //modulo 360 degree arithmatic to ensure angle is valid
 		if (discreteSpline[ii][1] > 180) {		//changing values to the range [-180 180]
 			discreteSpline[ii][1] = 180 - discreteSpline[ii][1];
 		}
-		discreteSpline[ii][2] = fmod(coeff[1] + 2 * coeff[2] * t + 3 * coeff[3] * t*t, 360); //Kara: do we need modulo 360 degree arithmatic for velocity?
-		
+		else if (discreteSpline[ii][1] < -180) {
+			discreteSpline[ii][1] = discreteSpline[ii][1]+180;
+		}
+		discreteSpline[ii][2] = coeff[1] + 2 * coeff[2] * t + 3 * coeff[3] * t*t;
 		discreteSpline[ii][3] = 2 * coeff[2] + 6 * coeff[3] * t;
 
 		t=t + deltaT;
