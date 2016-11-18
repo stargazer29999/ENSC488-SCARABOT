@@ -198,7 +198,7 @@ void robo_control::moveCart()
 						dist[i] += abs(q0[j] - r_matrix[i][j]);
 					}
 				}
-				if (dist[0] > dist[1]) {
+				if (dist[0] < dist[1]) {	//kara
 
 					cl = clock();   //starting time of clock
 
