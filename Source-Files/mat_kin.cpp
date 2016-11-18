@@ -162,8 +162,7 @@ double** mat_kin::WHERE(double* joint)
 	internal_form[2][1] = 0;
 	internal_form[2][2] = -1;
 	internal_form[2][3] = 125-d3;	//frame moved to base see demo1.m file (ask Caelan)s
-										
-										// internal_form[2][3] = -d3 - 480;	//old versio
+	// internal_form[2][3] = -d3 - 480;	//old version
 	internal_form[3][0] = 0;
 	internal_form[3][1] = 0;
 	internal_form[3][2] = 0;
@@ -207,34 +206,24 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	}
 	joint2[0] = -atan2(sqrt(1 - A*A), A);
 	joint2[1] = -atan2(-sqrt(1 - A*A), A);
-
 	
-	//theta1 = findTheta1(px, py, oldJoints[1]);
-/*
-	double a = px;
-	double b = py;
-	double c = -px*px / 284 - py*py / 284 - 48107 / 142;
-
-	joint1[0] = 2 * atan2((b + sqrt(b*b - c*c + a*a)) / (c + a), 1) - joint2[0];
-	joint1[1] = 2 * atan2((b - sqrt(b*b - c*c + a*a)) / (c + a), 1) - joint2[1];
-
-*/
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 2; i++) 
+	{
 		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));
-		if ( r == 0 ) {
+		if ( r == 0 ) 
+		{
 			cout << "no solution" << endl;
 			joints[3][3] = 0;
 		}
-		else {
-			gamma = atan2(142 * sin(joint2[i]) / r, (195 + 142 * cos(joint2[i])) / r);
-			joint1[i] = atan2(py / r, px / r) - gamma;
+		else 
+		{
+			gamma = atan2(142* sin(joint2[i]), (195 +142* cos(joint2[i])));
+			joint1[i] = atan2(py, px) - gamma;
 		}
 
 	}
 	
 	joint3 = -pz + 125; //moved frame to base see demo1.m
-
-
 	//joint3 = -pz - 480;		//old solution
 
 	joint4[0] = joint1[0] + joint2[0] - atan2(r10, r00);
@@ -249,6 +238,62 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	joint4[0] = (joint4[0] * 180 / PI);
 	joint4[1] = (joint4[1] * 180 / PI);
 
+	//correcting joint 1 solution 1
+	if (joint1[0] > 180)
+	{
+		joint1[0] = joint1[0] - 360;
+	}
+	else if (joint1[0] < -180)
+	{
+		joint1[0] = joint1[0] + 360;
+	}
+	//correcting joint 1 solution 2
+	if (joint1[1] > 180)
+	{
+		joint1[1] = joint1[1] - 360;
+	}
+	else if (joint1[1] < -180)
+	{
+		joint1[1] = joint1[1] + 360;
+	}
+	
+	//correcting joint 2 solution 1
+	if (joint2[0] > 180)
+	{
+		joint2[0] = joint2[0] - 360;
+	}
+	else if (joint2[0] < -180)
+	{
+		joint2[0] = joint2[0] + 360;
+	}
+	//correcting joint 2 solution 2
+	if (joint2[1] > 180)
+	{
+		joint2[1] = joint2[1] - 360;
+	}
+	else if (joint2[1] < -180)
+	{
+		joint2[1] = joint2[1] + 360;
+	}
+
+	//correcting joint 4 solution 1
+	if (joint4[0] > 180)
+	{
+		joint4[0] = joint4[0] - 360;
+	}
+	else if (joint4[0] < -180)
+	{
+		joint4[0] = joint4[0] + 360;
+	}
+	//correcting joint 4 solution 2
+	if (joint4[1] > 180)
+	{
+		joint4[1] = joint4[1] - 360;
+	}
+	else if (joint4[1] < -180)
+	{
+		joint4[1] = joint4[1] + 360;
+	}
 	/*
 	//** Error Checking **
 	if ((joint1[0] > 150 || joint1[0] < -150) && (joint1[1] > 150 || joint1[1] < -150)) {
@@ -323,19 +368,19 @@ void mat_kin::printMatrix(double** matrix, int height, int width) {
 bool mat_kin::errorFound(double *values, int selection) {
 
 	if (selection==1){		// Check Joint values
-		if (values[0] > 150 || values[0] < -150) {
+		if (	(int)values[0] > 150 || (int)values[0] < -150) {
 			cout << "ERROR: Joint 1 limit"<<endl;
 			return true;
 		}
-		else if (values[1] > 100 || values[1] < -100) {
+		else if ((int)values[1] > 100 || (int)values[1] < -100) {
 			cout << "ERROR: Joint 2 limit" << endl;
 			return true;
 		}
-		else if (values[2] < -200 || values[2]> -100) {
+		else if ((int)values[2] < -200 || (int)values[2]> -100) {
 			cout << "ERROR: Joint 3 limit" << endl;
 			return true;
 		}
-		else if (values[3] > 160 || values[3] < -160) {
+		else if ((int)values[3] > 160 || (int)values[3] < -160) {
 			cout << "ERROR: Joint 4 limit" << endl;
 			return true;
 		}
