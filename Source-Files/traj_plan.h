@@ -9,11 +9,15 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <string>
+
 
 #include "mat_kin.h"
 
+
+
 #define WIDTH 4
-#define RES 10	// the time resolution
+#define RES 10	// the time resolution (ms)
 
 class traj_plan
 {
@@ -31,31 +35,33 @@ private:
 	double* joint;
 
 	double t;
-	int ii;
+	int ii, via0,via1,via2,via3;
+	int points;
 
 	double h_0, h_1, h_2, h_3;
 	double h_4; //time btw. last via and goal?
 	double delta0, delta1, delta2, delta3;
 	double v1, v2, v3, v4;
 	double deltaT;
-	
+	double total_time;
 
 	int vi_1;
 	int steps;
 
 public:
 	traj_plan();
-	double*** discreteTrajectory(double** viaPoints, int numVia);
+	double*** discreteTrajectory(double** viaPoints, int numVia, int numPoints);
 	void traj_plan::printTrajectory(string filename, double** jointValues, int steps);
-	double** traj_plan::calcSpline(double* joint, int numVia, int i, double* time);
+	double** traj_plan::calcSpline(double* joint, int numVia, int i, double *time, int numPoints);
 	double* traj_plan::calcCoeff(double yi, double yi_1, double vi, double vi_1, double hi);
 	double** traj_plan::calcDiscreteSpline(double t0, double tf, double* coeff );
-	void traj_plan::appPrintTrajectory(string filename, double input);
-	//void traj_plan::printResults(double*** jointValues, int steps, int i, int j, int tempCounter);
-	//int traj_plan::timeSampling()
-	
+-	void traj_plan::appPrintTrajectory(string filename, double input);
+-	//void traj_plan::printResults(double*** jointValues, int steps, int i, int j, int tempCounter);
+-	//int traj_plan::timeSampling()
+-	
+-	void traj_plan::printM(double** matrix, int height, int width); //Kara: please remove once code is complete
 	void traj_plan::printM(double** matrix, int height, int width); //Kara: please remove once code is complete
-
+	int traj_plan::numofPoints(double t1, double t2, double t3, double t4);
 };
 
 #endif 
