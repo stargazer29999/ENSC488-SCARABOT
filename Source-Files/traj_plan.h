@@ -1,4 +1,4 @@
-#ifndef TRAJ_PLAN
+	#ifndef TRAJ_PLAN
 #define TRAJ_PLAN
 //This class handles commanding the emulator by using the previously developed matrix operations
 
@@ -50,7 +50,10 @@ public:
 	double** traj_plan::calcSpline(double* joint, int numVia, int i, double* time);
 	double* traj_plan::calcCoeff(double yi, double yi_1, double vi, double vi_1, double hi);
 	double** traj_plan::calcDiscreteSpline(double t0, double tf, double* coeff );
-
+	void traj_plan::appPrintTrajectory(string filename, double input);
+	//void traj_plan::printResults(double*** jointValues, int steps, int i, int j, int tempCounter);
+	//int traj_plan::timeSampling()
+	
 	void traj_plan::printM(double** matrix, int height, int width); //Kara: please remove once code is complete
 
 };
