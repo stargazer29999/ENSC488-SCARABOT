@@ -2,11 +2,13 @@
 *This member class includes all the functions required to
 *caluate and print a direcrete spline for a give set of frames
 */
-
+#include <chrono>
+#include <thread>
 #include "traj_plan.h"
 
 using namespace std;
 traj_plan::traj_plan() {
+	
 	if (remove("Joints.txt") != 0&& remove("numPoints.txt") != 0)
 	{
 		//error in deleting file;	
@@ -36,7 +38,8 @@ traj_plan::traj_plan() {
 	* Ouput: the discrete values of: joint value, joint veloctiy and joint acceleration
 	*/
 	double*** traj_plan::discreteTrajectory(double** viaPoints, int numVia, int numPoints) {
-
+		using namespace std::this_thread; // sleep_for, sleep_until
+		using namespace std::chrono; // nanoseconds, system_clock, seconds
 		for (int i = 0; i < 4; i++) {
 			Output[i] = new double*[numPoints];
 			for (int j = 0; j < numPoints; j++) {
@@ -86,17 +89,18 @@ traj_plan::traj_plan() {
 			}
 
 
-			cout << "Used for Debugging, joint " << (i + 1) << endl;
-			cout << setw(12) << "time" << setw(12) << "joint val" << setw(12) << "velocity" << setw(12) << "accel" << endl;
+			//cout << "Used for Debugging, joint " << (i + 1) << endl;
+			//cout << setw(12) << "time" << setw(12) << "joint val" << setw(12) << "velocity" << setw(12) << "accel" << endl;
 			ii = 0;
 			while ((ii <= (numPoints)) && ((int)Output[i][ii][0] != 999)) {
 				for (int jj = 0; jj < 4; jj++) {
-					cout << setw(12) << Output[i][ii][jj];
+					//cout << setw(12) << Output[i][ii][jj];
 					appPrintTrajectory("Joints.txt", Output[i][ii][jj]);
 
 					//				printResults(Output, steps, ii, jj);
+					sleep_for(milliseconds(10));
 				}
-				cout << endl;
+				//cout << endl;
 				appPrintTrajectory("Joints.txt", -9999);
 				ii++;
 			}
@@ -416,7 +420,7 @@ traj_plan::traj_plan() {
 		while (t <= tf) {				//Kara: the last entry suposed to be at the final time
 			discreteSpline[ii][0] = t;
 
-			discreteSpline[ii][1] = coeff[0] + coeff[1] * t + coeff[2] * t*t + coeff[3] * t*t*t; //modulo 360 degree arithmatic to ensure angle is valid
+			discreteSpline[ii][1] = coeff[0] + coeff[1] * t + coeff[2] * t*t + coeff[3] * t*t*t; 
 			discreteSpline[ii][2] = coeff[1] + 2 * coeff[2] * t + 3 * coeff[3] * t*t;
 			discreteSpline[ii][3] = 2 * coeff[2] + 6 * coeff[3] * t;
 
@@ -445,7 +449,7 @@ traj_plan::traj_plan() {
 		total_time = t1 + t2 + t3 + t4;
 		cout << "Total Time: " << total_time << endl;
 
-		cout << "Number of smaple points: " << ceil(total_time / RES) << endl;
+		cout << "Number of sample points: " << ceil(total_time / RES) << endl;
 
 		return ceil(total_time / RES);
 
