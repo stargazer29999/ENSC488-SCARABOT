@@ -1,4 +1,6 @@
 #include "robo_control.h"
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -71,7 +73,7 @@ void robo_control::moveJOINT()
 	r_matrix = cmd.WHERE(user_form);
 	cmd.printMatrix(r_matrix, HEIGHT, WIDTH);
 
-	cout << "The Cartesian coordiantes are :  x=" << (int)r_matrix[0][3] << " y=" << (int)r_matrix[1][3] << "  z=" << (int)r_matrix[2][3] << " PHI=" << (int)(user_form[0] + user_form[1] - user_form[3]) << endl;
+	cout << "The Cartesian coordiantes are :  x= " << (int)r_matrix[0][3] << " y= " << (int)r_matrix[1][3] << "  z= " << (int)r_matrix[2][3] << " PHI= " << (int)(user_form[0] + user_form[1] - user_form[3]) << endl;
 
 	//Error 
 	if (!cmd.errorFound(user_form, 1)) {
@@ -144,43 +146,48 @@ void robo_control::moveCart()
 	cout << endl;
 
 	JOINT q0;
+	
+	bool noSolution = false;
 	GetConfiguration(q0);
 
 	r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
 
-	cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-	cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-
+	//cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+	//cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+	
+	//decided to add int casting on the joint values found from inverse kinematics in case we need more accuracy later
 	if (r_matrix[3][3] == 0) {
-		JOINT q1 = { r_matrix[1][0], r_matrix[1][1] ,r_matrix[0][2], r_matrix[0][3] };
+		JOINT q1 = { (int)r_matrix[1][0], (int)r_matrix[1][1], (int)r_matrix[0][2], (int)r_matrix[0][3] };
 		cout << "** No Valid Solution found **" << endl;
+		noSolution = true;
+		//jump to the end of function
 	}
-	else if (r_matrix[3][3] == 1) {
+	else if ((int)r_matrix[3][3] == 1) {
 		cout << "** First solution is not valid**" << endl;
-		cl = clock();   //starting time of clock
+		cout << "Soltution 2 is chosen: " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
 
-		JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[1][3] };
-		//MoveToConfiguration(q1, false);
+		JOINT q1 = { (int)r_matrix[1][0], (int)r_matrix[1][1], (int)r_matrix[0][2], (int)r_matrix[1][3] };
+
+		cl = clock();   //starting time of clock
 		MoveToConfiguration(q1, true);
 		cl = clock() - cl;  //end point of clock
-
-		cout << "Solution 2 is chosen " << endl;
+		
 		cout << "===========================================" << endl;
 		cout << "Forward Kinematics from WHERE(): " << endl;
 		cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
 		cout << "===========================================" << endl;
 
 	}
-	else if (r_matrix[3][3] == 2) {
+	else if ((int)r_matrix[3][3] == 2) {
 		cout << "** Second solution is not valid**" << endl;
-		cl = clock();   //starting time of clock
+		cout << "Soltution 1 is chosen: " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+		
+		JOINT q1 = { (int)r_matrix[0][0], (int)r_matrix[0][1], (int)r_matrix[0][2], (int)r_matrix[0][3] };
 
-		JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
-		//MoveToConfiguration(q1, false);
+		cl = clock();   //starting time of clock
 		MoveToConfiguration(q1, true);
 		cl = clock() - cl;  //end point of clock
 
-		cout << "Solution 1 is chosen" << endl;
 		cout << "===========================================" << endl;
 		cout << "Forward Kinematics from WHERE(): " << endl;
 		cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
@@ -188,8 +195,11 @@ void robo_control::moveCart()
 
 	}
 	else {
-			cout << "Two  Solutions" << endl;
-			if (r_matrix[0][0] != r_matrix[1][0]) {
+			cout << "Two  Solutions found." << endl;
+			cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
+			cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+
+			if ((int)r_matrix[0][0] != (int)r_matrix[1][0]) {
 				cout << "Two different solutions: ";
 				//Find the shortest distance if solution is valid
 				//sum the metric distances
@@ -198,30 +208,27 @@ void robo_control::moveCart()
 						dist[i] += abs(q0[j] - r_matrix[i][j]);
 					}
 				}
-				if (dist[0] < dist[1]) {	//kara
 
+				if (dist[0] < dist[1]) {
+					cout << "Solution 1 is a shorter distance away" << endl;
+					JOINT q1 = { (int)r_matrix[0][0], (int)r_matrix[0][1], (int)r_matrix[0][2], (int)r_matrix[0][3] };
 					cl = clock();   //starting time of clock
-
-					JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
-					//MoveToConfiguration(q1, false);
 					MoveToConfiguration(q1, true);
 					cl = clock() - cl;  //end point of clock
 
-					cout << "Solution 1 is a shorter distance away" << endl;
 					cout << "===========================================" << endl;
 					cout << "Forward Kinematics from WHERE(): " << endl;
 					cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
 					cout << "===========================================" << endl;
 				}
 				else {
-					cl = clock();   //starting time of clock
-
-					JOINT q1 = { r_matrix[1][0], r_matrix[1][1], r_matrix[0][2], r_matrix[1][3] };
-					//MoveToConfiguration(q1, false);
-					MoveToConfiguration(q1, true);
-					cl = clock() - cl;  //end point of clock
-
 					cout << "Solution 2 is a shorter distance away " << endl;
+					JOINT q1 = { (int)r_matrix[1][0], (int)r_matrix[1][1], (int)r_matrix[0][2], (int)r_matrix[1][3] };
+					cl = clock();   //starting time of clock
+					MoveToConfiguration(q1, true);
+ 					cl = clock() - cl;  //end point of clock
+
+
 					cout << "===========================================" << endl;
 					cout << "Forward Kinematics from WHERE(): " << endl;
 					cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
@@ -229,14 +236,12 @@ void robo_control::moveCart()
 				}
 			}
 			else {
+				cout << "Solution 1 & 2 are the same" << endl;
+				JOINT q1 = { (int)r_matrix[0][0], (int)r_matrix[0][1], (int)r_matrix[0][2], (int) r_matrix[0][3] };
 				cl = clock();   //starting time of clock
-
-				JOINT q1 = { r_matrix[0][0], r_matrix[0][1], r_matrix[0][2], r_matrix[0][3] };
-				//MoveToConfiguration(q1, false);
 				MoveToConfiguration(q1, true);
 				cl = clock() - cl;  //end point of clock
-
-				cout << "Solution 1 & 2 are the same" << endl;
+				
 				cout << "===========================================" << endl;
 				cout << "Forward Kinematics from WHERE(): " << endl;
 				cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
@@ -244,11 +249,10 @@ void robo_control::moveCart()
 			}
 		}
 
-	
-
-
-	cout << "It took "<<cl / (double)CLOCKS_PER_SEC<<" sec to move robot" << endl;  //prints the determined ticks per second (seconds passed)
-
+	if (noSolution != true)
+	{
+		cout << "It took " << cl / (double)CLOCKS_PER_SEC << " sec to move robot" << endl;  //prints the determined ticks per second (seconds passed)
+	}
 }
 
 void robo_control::trajectoryPlan() {
@@ -267,8 +271,10 @@ void robo_control::trajectoryPlan() {
 	via[0][4] = -999;
 
 
-	cout << "The desired GOAL location (x,y,z, phi) and time to travel in ms: " << endl;
+	cout << "The desired GOAL location (x,y,z, phi) and time to travel in seconds: " << endl;
 	cin >> via[4][0] >> via[4][1] >> via[4][2] >> via[4][3] >> via[4][4];
+	
+
 
 	cout << "How many intermediate locations (0, 1, 2, 3)? ";
 	cin >> numLocations;
@@ -299,8 +305,7 @@ void robo_control::trajectoryPlan() {
 	cout << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << setw(15) << "phi" << setw(15) << "time (ms)" << endl;
 	cmd.printMatrix(via, (HEIGHT + 1), (WIDTH + 1));
 	//end of comment out section
-
-
+	
 	//Call inverse function for each frame to get desired joint values
 	for (int i = 0; i < 5; i++) {
 		if (via[i][0] != -999) {	//What it should do: go through calcuations if the value is not -999
@@ -344,6 +349,7 @@ void robo_control::trajectoryPlan() {
 			}
 		}
 	}
+	/////////////HERE
 	//Comment out the follwoing section once the code works to save space
 	cout << "You have input the following joint values and time to move to: " << endl;
 	cout << setw(15) << "j1" << setw(15) << "j2" << setw(15) << "j3" << setw(15) << "j4" << setw(15) << "time (ms)" << endl;
@@ -381,10 +387,12 @@ void robo_control::trajectoryPlan() {
 			JOINT q1 = { traj[0][ii][2], traj[2][ii][2] , traj[3][ii][2], traj[4][ii][2] };
 			JOINT q2 = { traj[0][ii][3], traj[2][ii][3] , traj[3][ii][3], traj[4][ii][3] };
 			MoveWithConfVelAcc(q0, q1, q2); //Kara Question: How to get the program to pause (time resoltuion delta t) before reading the next value?
-			
+			//add sleep here.
+			//sleep in sec.
+			//_sleep(traj[0][ii + 1][0] - traj[0][ii][0]);
+			//std::this_thread::sleep_for(std::chrono::milliseconds((traj[0][ii + 1][0] - traj[0][ii][0])));
+			//final - initial time comparison
 			//Pause here
-			_sleep(traj[0][ii + 1][0] - traj[0][ii][0]);//kara
-			
 		}
 		ii++;
 	}
@@ -393,3 +401,24 @@ void robo_control::trajectoryPlan() {
 	cout << "It took " << cl / (double)CLOCKS_PER_SEC << " sec to move robot" << endl;  //prints the determined ticks per second (seconds passed)
 
 }
+
+/*
+void robo_control::getStateID()
+{
+	JOINT q0;
+	GetConfiguration(q0);
+	bool returnedVal = GetState(q0);
+	if (returnedVal == true)
+	{
+		cout << "worked";
+		std::stringstream cout;
+		cout << std::hex << (long)q0[0];
+		std::string result(cout.str())
+			cout << (long)q0[0] << " " << (long)q0[1] << " " << (long)q0[2] << " " << (long)q0[3] << endl;
+	}
+	else
+	{
+		cout << "failed";
+	}
+}
+*/
