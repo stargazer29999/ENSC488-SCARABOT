@@ -152,7 +152,7 @@ double** mat_kin::WHERE(double* joint)
 	internal_form[0][1] = sin(the1 + the2 - the4);
 	internal_form[0][2] = 0;
 	internal_form[0][3] = 195 * cos(the1) + 142 * cos(the1 + the2);
-	
+
 	internal_form[1][0] = sin(the1 + the2 - the4);
 	internal_form[1][1] = -cos(the1 + the2 - the4);
 	internal_form[1][2] = 0;
@@ -161,8 +161,15 @@ double** mat_kin::WHERE(double* joint)
 	internal_form[2][0] = 0;
 	internal_form[2][1] = 0;
 	internal_form[2][2] = -1;
-	internal_form[2][3] = 125-d3;	//frame moved to base see demo1.m file (ask Caelan)s
-	// internal_form[2][3] = -d3 - 480;	//old version
+	
+	internal_form[2][3] = - d3 + 125;	//frame moved to base see demo1.m file (ask Caelan)s
+	
+	//from my calculations this should be d3-130;
+	//internal_form[2][3] = -d3 + 130;
+
+	//internal_form[2][3] = d3 + 140;	//frame moved to base see demo1.m file (ask Caelan)s
+
+	// internal_form[2][3] = -d3 - 480;	//old versio
 	internal_form[3][0] = 0;
 	internal_form[3][1] = 0;
 	internal_form[3][2] = 0;
@@ -173,7 +180,7 @@ double** mat_kin::WHERE(double* joint)
 
 	return internal_form;
 
-	
+
 }
 
 double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
@@ -201,43 +208,51 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	//theta2 = findTheta2(px,py, theta1[0], theta1[1]);	
 	A = (px*px + py*py - 142 * 142 - 195 * 195) / (2 * 195 * 142);
 	if (A*A > 1) {
-		cout << "no solution" << endl;
+		cout << "no solution" << endl;//do we really need this? it'll get checked in error checking
 		joints[3][3] = 0;
 	}
 	joint2[0] = -atan2(sqrt(1 - A*A), A);
 	joint2[1] = -atan2(-sqrt(1 - A*A), A);
-	
-	for (int i = 0; i < 2; i++) 
-	{
-		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));
-		if ( r == 0 ) 
-		{
-			cout << "no solution" << endl;
+
+
+
+	//theta1 = findTheta1(px, py, oldJoints[1]);
+	for (int i = 0; i < 2; i++) {
+		
+		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));// jason
+		if (r == 0) {
+			cout << "no solution" << endl;//do we really need this? it'll get checked in error checking
 			joints[3][3] = 0;
 		}
-		else 
-		{
+		else {
+		
+			/*	//k2, k1
+			//l2 = 142
+			//l1 = 195
+			//l2+l1cos2
+			//gamma = atan(195 * sin(joint2[i]) / (142 + 195 * cos(joint2[i]))); //jason
+			//gamma = atan2( (142 * sin(joint2[i]))/r, (195 + 142 * cos(joint2[i])) / r);
+			*/
 			gamma = atan2(142* sin(joint2[i]), (195 +142* cos(joint2[i])));
 			joint1[i] = atan2(py, px) - gamma;
-		}
-
+		}	
 	}
-	
+
 	joint3 = -pz + 125; //moved frame to base see demo1.m
-	//joint3 = -pz - 480;		//old solution
 
 	joint4[0] = joint1[0] + joint2[0] - atan2(r10, r00);
 	joint4[1] = joint1[1] + joint2[1] - atan2(r10, r00);
 
+	
 	joint1[0] = joint1[0] * 180 / PI;
 	joint1[1] = joint1[1] * 180 / PI;
 
-	joint2[0] = joint2[0] * 180 / PI;
+	joint2[0] = joint2[0] * 180 / PI; 
 	joint2[1] = joint2[1] * 180 / PI;
 
 	joint4[0] = (joint4[0] * 180 / PI);
 	joint4[1] = (joint4[1] * 180 / PI);
-
+	
 	//correcting joint 1 solution 1
 	if (joint1[0] > 180)
 	{
@@ -294,27 +309,28 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	{
 		joint4[1] = joint4[1] + 360;
 	}
+
 	/*
 	//** Error Checking **
 	if ((joint1[0] > 150 || joint1[0] < -150) && (joint1[1] > 150 || joint1[1] < -150)) {
-		cout << "SOLVE_ERROR: joint 1 limit " << endl << endl;
-		joints[3][3] = 0;
+	cout << "SOLVE_ERROR: joint 1 limit " << endl << endl;
+	joints[3][3] = 0;
 	}
 	if ((joint2[0] > 100 || joint2[0] < -100) && (joint2[1] > 100 || joint2[1] < -100)) {
-		cout << "SOLVE_ERROR: joint2[0]  limit" << endl << endl;
-		joints[3][3] = 0;
+	cout << "SOLVE_ERROR: joint2[0]  limit" << endl << endl;
+	joints[3][3] = 0;
 	}
 	if (joint3 < -200 || joint3 >-100) {
-		cout << "SOLVE_ERROR: Joint 3 limit " << endl << endl;
-		joints[3][3] = 0;
+	cout << "SOLVE_ERROR: Joint 3 limit " << endl << endl;
+	joints[3][3] = 0;
 	}
 	if ((joint4[0] > 160 || joint4[0] < -160) && (joint4[1] >160 || joint4[1] < -160)){
-		cout << "SOLVE_ERROR: joint4  limit " << endl << endl;
-		joints[3][3] = 0;
+	cout << "SOLVE_ERROR: joint4  limit " << endl << endl;
+	joints[3][3] = 0;
 	}
 	*/
-	//place results into output array
 
+	//place results into output array
 	joints[0][0] = joint1[0];
 	joints[1][0] = joint1[1];
 	joints[0][1] = joint2[0];
@@ -345,19 +361,19 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 
 void mat_kin::printInternalMatrix(double** matrix) {
 
-	for (int x = 0; x<8; x++) {
-		for (int y = 0; y<=4; y++) {
-			cout << matrix[x][y] << "\t";
-		}
-		cout << endl;
-	}
-	cout << endl << endl;
+for (int x = 0; x<8; x++) {
+for (int y = 0; y<=4; y++) {
+cout << matrix[x][y] << "\t";
+}
+cout << endl;
+}
+cout << endl << endl;
 }
 */
 void mat_kin::printMatrix(double** matrix, int height, int width) {
 
 	for (int y = 0; y< height; y++) {
-		for (int  x = 0; x< width; x++) {
+		for (int x = 0; x< width; x++) {
 			cout << setw(15) << matrix[y][x];// << "\t";
 		}
 		cout << endl;
@@ -367,20 +383,21 @@ void mat_kin::printMatrix(double** matrix, int height, int width) {
 
 bool mat_kin::errorFound(double *values, int selection) {
 
-	if (selection==1){		// Check Joint values
-		if (	(int)values[0] > 150 || (int)values[0] < -150) {
-			cout << "ERROR: Joint 1 limit"<<endl;
+	if (selection == 1){		// Check Joint values
+		if ((round(values[0]) > 150 || (round(values[0]))< -150))
+		{
+			cout << "ERROR: Joint 1 limit" << endl;
 			return true;
 		}
-		else if ((int)values[1] > 100 || (int)values[1] < -100) {
+		else if ((round(values[1]) > 100 || (round(values[1]) < -100))) {
 			cout << "ERROR: Joint 2 limit" << endl;
 			return true;
 		}
-		else if ((int)values[2] < -200 || (int)values[2]> -100) {
+		else if ((values[2]) < -200 || ((values[2]) > -100)) {
 			cout << "ERROR: Joint 3 limit" << endl;
 			return true;
 		}
-		else if ((int)values[3] > 160 || (int)values[3] < -160) {
+		else if ((round(values[3]) > 160 || (round(values[3]) < -160))) {
 			cout << "ERROR: Joint 4 limit" << endl;
 			return true;
 		}
@@ -389,55 +406,55 @@ bool mat_kin::errorFound(double *values, int selection) {
 		}
 	}
 	else if (selection == 2) {		// Check Joint Velocities
-	
-		//Revolute joints 1, 2, 4 = [-150, 150] mm / s
+
+		//Revolute joints 1, 2, 4 = [-150, 150] degrees / s
 		//Prismatic Joint 3 = [-50, 50] mm / s
 
-			if (values[0] > 150 || values[0] < -150) {
-				cout << "ERROR: Velocity Joint 1 limit" << endl;
-				return true;
-			}
-			else if (values[1] > 150 || values[1] < -150) {
-				cout << "ERROR: Velocity Joint 2 limit" << endl;
-				return true;
-			}
-			else if (values[2] < 50 || values[2]>-50) {
-				cout << "ERROR: Velocity Joint 3 limit" << endl;
-				return true;
-			}
-			else if (values[3] >150 || values[3] < -150) {
-				cout << "ERROR: Velocity Joint 4 limit" << endl;
-				return true;
-			}
-			else {
-				return false;
-			}
+		if (round(values[0]) > 150 || round(values[0]) < -150) {
+			cout << "ERROR: Velocity Joint 1 limit" << endl;
+			return true; 
+		}
+		else if (round(values[1]) > 150 || round(values[1]) < -150) {
+			cout << "ERROR: Velocity Joint 2 limit" << endl;
+			return true;
+		}
+		else if ((values[2]) > 50 || values[2] < -50) {
+			cout << "ERROR: Velocity Joint 3 limit" << endl;
+			return true;
+		}
+		else if (round(values[3]) >150 || round(values[3]) < -150) {
+			cout << "ERROR: Velocity Joint 4 limit" << endl;
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	else if (selection == 3) {		// Check Joint Acceleration
-		
-		//	Revolute joints 1, 2, 4 = [-600, 600] mm / s^2
+
+		//	Revolute joints 1, 2, 4 = [-600, 600] degrees / s^2
 		//	Prismatic Joint 3 = [-200, 200] mm / s^2
-			if (values[0] > 600 || values[0] < -600) {
-				cout << "ERROR: Acceleration Joint 1 limit" << endl;
-				return true;
-			}
-			else if (values[1] > 600 || values[1] < -600) {
-				cout << "ERROR: Acceleration Joint 2 limit" << endl;
-				return true;
-			}
-			else if (values[2] <= -200 || values[2]> 200) {
-				cout << "ERROR: Acceleration Joint 3 limit" << endl;
-				return true;
-			}
-			else if (values[3] >600 || values[3] < -600) {
-				cout << "ERROR: Accelerationy Joint 4 limit" << endl;
-				return true;
-			}
-			else {
-				return false;
-			}
-	
+		if (round(values[0]) > 600 || round(values[0]) < -600) {
+			cout << "ERROR: Acceleration Joint 1 limit" << endl;
+			return true;
+		}
+		else if (round(values[1]) > 600 || round(values[1]) < -600) {
+			cout << "ERROR: Acceleration Joint 2 limit" << endl;
+			return true;
+		}
+		else if (round(values[2]) <= -200 || round(values[2])> 200) {
+			cout << "ERROR: Acceleration Joint 3 limit" << endl;
+			return true;
+		}
+		else if (round(values[3]) >600 || round(values[3]) < -600) {
+			cout << "ERROR: Accelerationy Joint 4 limit" << endl;
+			return true;
+		}
+		else {
+			return false;
+		}
+
 	}
-	return true;
+	return false;
 
 }
