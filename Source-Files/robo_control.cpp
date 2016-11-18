@@ -48,14 +48,6 @@ robo_control::robo_control()
 	}
 
 	traj = new double **[4];
-	for (int i = 0; i < (4 * RES); i++) {
-		traj[i] = new double*[WIDTH];
-		for (int j = 0; j < WIDTH; j++) {
-			traj[i][j] = new double[WIDTH];
-		}
-	}
-
-
 
 }
 
@@ -264,17 +256,16 @@ void robo_control::trajectoryPlan() {
 	double dist[2] = { 0,0 };
 	int sln;
 	bool FAIL = false;
+	int samplePoints;
 
 
 	cout << "The desired START location (x,y,z, phi) ";
 	cin >> via[0][0] >> via[0][1] >> via[0][2] >> via[0][3];// >> via[0][4];	//Kara: does the start frame acutally need a time?
-	via[0][4] = -999;
+	via[0][4] = 999;
 
 
 	cout << "The desired GOAL location (x,y,z, phi) and time to travel in seconds: " << endl;
 	cin >> via[4][0] >> via[4][1] >> via[4][2] >> via[4][3] >> via[4][4];
-	
-
 
 	cout << "How many intermediate locations (0, 1, 2, 3)? ";
 	cin >> numLocations;
@@ -287,28 +278,28 @@ void robo_control::trajectoryPlan() {
 			}
 			else {
 				for (int j = 0; j < 5; j++) {
-					via[i][j] = -999;	//error code
+					via[i][j] = 999;	//error code
 				}
 			}
 		}
 	}
 	else {
 		for (int i = 1; i < 4; i++) {
-			for (int j = 0; j < 5; j++) {
-				via[i][j] = -999;	//error code
+			for (int j = 0; j < 4; j++) {
+				via[i][j] = 999;	//error code
 			}
+			via[i][4] = 0;
 		}
 	}
 
-	//Comment out the follwoing section once the code works to save space
 	cout << "You have input the following locations and time: " << endl;
 	cout << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << setw(15) << "phi" << setw(15) << "time (ms)" << endl;
 	cmd.printMatrix(via, (HEIGHT + 1), (WIDTH + 1));
-	//end of comment out section
+
 	
 	//Call inverse function for each frame to get desired joint values
 	for (int i = 0; i < 5; i++) {
-		if (via[i][0] != -999) {	//What it should do: go through calcuations if the value is not -999
+		if (via[i][0] != 999) {	//What it should do: go through calcuations if the value is not 999
 			r_matrix = cmd.SOLVE(q0, cmd.UTOI(via[i]));
 
 			if (r_matrix[3][3] == 0) {
@@ -349,27 +340,35 @@ void robo_control::trajectoryPlan() {
 			}
 		}
 	}
-	/////////////HERE
-	//Comment out the follwoing section once the code works to save space
+
+
 	cout << "You have input the following joint values and time to move to: " << endl;
 	cout << setw(15) << "j1" << setw(15) << "j2" << setw(15) << "j3" << setw(15) << "j4" << setw(15) << "time (ms)" << endl;
 	cmd.printMatrix(via, (HEIGHT + 1), (WIDTH + 1));
-	//end of comment out section
+
 
 	//Move to the Starting point
 	JOINT q1 = { via[0][0], via[0][1], via[0][2], via[0][3] };
 	MoveToConfiguration(q1, false);
 
-	
-	//Call trajectory planning function -> change to return something
-	//traj, a matrix of __x__x_ which holds the values 
-	//ADD: start a timer
-	traj = cmd2.discreteTrajectory(via, numLocations);
+	//Get number of data points
+	samplePoints=cmd2.numofPoints(via[1][4], via[2][4], via[3][4], via[4][4]);
+
+	//Allocate space for trajectory
+	for (int i = 0; i < (samplePoints); i++) {
+		traj[i] = new double*[WIDTH];
+		for (int j = 0; j < WIDTH; j++) {
+			traj[i][j] = new double[WIDTH];
+		}
+	}
+
+	//Call trajectory planning function
+	traj = cmd2.discreteTrajectory(via, numLocations, samplePoints);
 	
 	ii = 0;
 	cl = clock();   //starting time of clock
 
-	while(ii<4*RES&&(int)traj[0][ii][0] !=999){
+	while(ii<samplePoints &&(int)traj[0][ii][0] !=999){
 	//for (int ii = 0; ii < 4 * RES; ii++) {
 		for (int j = 0; j < 4; j++) {
 			for (int k = 0; k < 4; k++) {
