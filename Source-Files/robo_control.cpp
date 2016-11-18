@@ -381,7 +381,10 @@ void robo_control::trajectoryPlan() {
 			JOINT q1 = { traj[0][ii][2], traj[2][ii][2] , traj[3][ii][2], traj[4][ii][2] };
 			JOINT q2 = { traj[0][ii][3], traj[2][ii][3] , traj[3][ii][3], traj[4][ii][3] };
 			MoveWithConfVelAcc(q0, q1, q2); //Kara Question: How to get the program to pause (time resoltuion delta t) before reading the next value?
-											//Pause here
+			
+			//Pause here
+			_sleep(traj[0][ii + 1][0] - traj[0][ii][0]);//kara
+			
 		}
 		ii++;
 	}
