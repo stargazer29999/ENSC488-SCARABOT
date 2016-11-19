@@ -323,7 +323,10 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 		joints[3][3] = 2;
 	}
 	return joints;
-	delete[] joints;
+//	for (int i = 0; i < HEIGHT; i++) {
+//		delete[] joints[i];
+//	}
+//	delete[] joints;*/
 }
 
 /*Function: printInternalMatrix
