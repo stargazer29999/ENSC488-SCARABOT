@@ -161,15 +161,15 @@ double** mat_kin::WHERE(double* joint)
 	internal_form[2][0] = 0;
 	internal_form[2][1] = 0;
 	internal_form[2][2] = -1;
-	
-	internal_form[2][3] = - d3 + 125;	//frame moved to base see demo1.m file (ask Caelan)s
-	
-	//from my calculations this should be d3-130;
-	//internal_form[2][3] = -d3 + 130;
 
-	//internal_form[2][3] = d3 + 140;	//frame moved to base see demo1.m file (ask Caelan)s
+	internal_form[2][3] = -d3 -75;	//frame moved to base see demo1.m file (ask Caelan)s
 
-	// internal_form[2][3] = -d3 - 480;	//old versio
+										//from my calculations this should be d3-130;
+										//internal_form[2][3] = -d3 + 130;
+
+										//internal_form[2][3] = d3 + 140;	//frame moved to base see demo1.m file (ask Caelan)s
+
+										// internal_form[2][3] = -d3 - 480;	//old versio
 	internal_form[3][0] = 0;
 	internal_form[3][1] = 0;
 	internal_form[3][2] = 0;
@@ -211,21 +211,21 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 		cout << "no solution" << endl;//do we really need this? it'll get checked in error checking
 		joints[3][3] = 0;
 	}
-	joint2[0] = -atan2(sqrt(1 - A*A), A);
-	joint2[1] = -atan2(-sqrt(1 - A*A), A);
+	joint2[0] = atan2(sqrt(1 - A*A), A);
+	joint2[1] = atan2(-sqrt(1 - A*A), A);
 
 
 
 	//theta1 = findTheta1(px, py, oldJoints[1]);
 	for (int i = 0; i < 2; i++) {
-		
+
 		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));// jason
 		if (r == 0) {
 			cout << "no solution" << endl;//do we really need this? it'll get checked in error checking
 			joints[3][3] = 0;
 		}
 		else {
-		
+
 			/*	//k2, k1
 			//l2 = 142
 			//l1 = 195
@@ -233,26 +233,26 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 			//gamma = atan(195 * sin(joint2[i]) / (142 + 195 * cos(joint2[i]))); //jason
 			//gamma = atan2( (142 * sin(joint2[i]))/r, (195 + 142 * cos(joint2[i])) / r);
 			*/
-			gamma = atan2(142* sin(joint2[i]), (195 +142* cos(joint2[i])));
+			gamma = atan2(142 * sin(joint2[i]), (195 + 142 * cos(joint2[i])));
 			joint1[i] = atan2(py, px) - gamma;
-		}	
+		}
 	}
 
-	joint3 = -pz + 125; //moved frame to base see demo1.m
+	joint3 = -(pz +75); //moved frame to base see demo1.m
 
 	joint4[0] = joint1[0] + joint2[0] - atan2(r10, r00);
 	joint4[1] = joint1[1] + joint2[1] - atan2(r10, r00);
 
-	
+
 	joint1[0] = joint1[0] * 180 / PI;
 	joint1[1] = joint1[1] * 180 / PI;
 
-	joint2[0] = joint2[0] * 180 / PI; 
+	joint2[0] = joint2[0] * 180 / PI;
 	joint2[1] = joint2[1] * 180 / PI;
 
 	joint4[0] = (joint4[0] * 180 / PI);
 	joint4[1] = (joint4[1] * 180 / PI);
-	
+
 	//correcting joint 1 solution 1
 	if (joint1[0] > 180)
 	{
@@ -271,7 +271,7 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	{
 		joint1[1] = joint1[1] + 360;
 	}
-	
+
 	//correcting joint 2 solution 1
 	if (joint2[0] > 180)
 	{
@@ -383,7 +383,7 @@ void mat_kin::printMatrix(double** matrix, int height, int width) {
 
 bool mat_kin::errorFound(double *values, int selection) {
 
-	if (selection == 1){		// Check Joint values
+	if (selection == 1) {		// Check Joint values
 		if ((round(values[0]) > 150 || (round(values[0]))< -150))
 		{
 			cout << "ERROR: Joint 1 limit" << endl;
@@ -407,12 +407,12 @@ bool mat_kin::errorFound(double *values, int selection) {
 	}
 	else if (selection == 2) {		// Check Joint Velocities
 
-		//Revolute joints 1, 2, 4 = [-150, 150] degrees / s
-		//Prismatic Joint 3 = [-50, 50] mm / s
+									//Revolute joints 1, 2, 4 = [-150, 150] degrees / s
+									//Prismatic Joint 3 = [-50, 50] mm / s
 
 		if (round(values[0]) > 150 || round(values[0]) < -150) {
 			cout << "ERROR: Velocity Joint 1 limit" << endl;
-			return true; 
+			return true;
 		}
 		else if (round(values[1]) > 150 || round(values[1]) < -150) {
 			cout << "ERROR: Velocity Joint 2 limit" << endl;
@@ -432,8 +432,8 @@ bool mat_kin::errorFound(double *values, int selection) {
 	}
 	else if (selection == 3) {		// Check Joint Acceleration
 
-		//	Revolute joints 1, 2, 4 = [-600, 600] degrees / s^2
-		//	Prismatic Joint 3 = [-200, 200] mm / s^2
+									//	Revolute joints 1, 2, 4 = [-600, 600] degrees / s^2
+									//	Prismatic Joint 3 = [-200, 200] mm / s^2
 		if (round(values[0]) > 600 || round(values[0]) < -600) {
 			cout << "ERROR: Acceleration Joint 1 limit" << endl;
 			return true;
