@@ -93,9 +93,9 @@ void  robo_control::moveGriper() {
 void robo_control::stopRobot()
 {
 	StopRobot();
-	CloseMonitor();
-}
+	//CloseMonitor();//our current stpo robot function closes monitor as well
 
+}
 
 void robo_control::initJoint()
 {
@@ -200,7 +200,6 @@ void robo_control::moveCart()
 					dist[i] += abs(q0[j] - r_matrix[i][j]);
 				}
 			}
-
 			if (dist[0] < dist[1]) {
 				cout << "Solution 1 is a shorter distance away" << endl;
 				JOINT q1 = { (int)r_matrix[0][0], (int)r_matrix[0][1], (int)r_matrix[0][2], (int)r_matrix[0][3] };
@@ -219,7 +218,6 @@ void robo_control::moveCart()
 				cl = clock();   //starting time of clock
 				MoveToConfiguration(q1, true);
 				cl = clock() - cl;  //end point of clock
-
 
 				cout << "===========================================" << endl;
 				cout << "Forward Kinematics from WHERE(): " << endl;
@@ -247,44 +245,51 @@ void robo_control::moveCart()
 	}
 }
 
-void robo_control::trajectoryPlan() {
-	using namespace std::this_thread; // sleep_for, sleep_until
-	using namespace std::chrono; // nanoseconds, system_clock, seconds
-	clock_t cl;     //initializing a clock type
-
-	JOINT q0;
-	GetConfiguration(q0);
+void robo_control::trajectoryPlan() 
+{
+	
+	using namespace std::this_thread;	// sleep_for, sleep_until
+	using namespace std::chrono;		// nanoseconds, system_clock, seconds
+	
+	clock_t cl;							//initializing a clock type
 	int numLocations;
 	double dist[2] = { 0, 0 };
 	int sln;
 	bool FAIL = false;
 	int samplePoints;
 
+	JOINT q0;
+	GetConfiguration(q0);
 
 	cout << "The desired START location (x,y,z, phi) ";
 	cin >> via[0][0] >> via[0][1] >> via[0][2] >> via[0][3];// >> via[0][4];	//Kara: does the start frame acutally need a time?
 	via[0][4] = 999;
-
-
+	
 	cout << "The desired GOAL location (x,y,z, phi) and time to travel in seconds: " << endl;
 	cin >> via[4][0] >> via[4][1] >> via[4][2] >> via[4][3] >> via[4][4];
 
 	cout << "How many intermediate locations (0, 1, 2, 3)? ";
 	cin >> numLocations;
-	if (numLocations != 0) {
-		for (int i = 1; i<4; i++) {  //three or foru?
-			if (i <= numLocations) {
+	if (numLocations != 0) 
+	{
+		for (int i = 1; i<4; i++) 
+		{  
+			if (i <= numLocations) 
+			{
 				cout << "Intermediate location " << (i) << ". ";
 				cin >> via[i][0] >> via[i][1] >> via[i][2] >> via[i][3] >> via[i][4];
 				cout << endl;
 			}
-			else {
-				for (int j = 0; j < 5; j++) {
+			else 
+			{
+				for (int j = 0; j < 5; j++) 
+				{
 					via[i][j] = 999;	//error code
 				}
 			}
 		}
 	}
+	//i don't get why we need the the time elements to be 999
 	else {
 		for (int i = 1; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
@@ -298,10 +303,11 @@ void robo_control::trajectoryPlan() {
 	cout << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << setw(15) << "phi" << setw(15) << "time (ms)" << endl;
 	cmd.printMatrix(via, (HEIGHT + 1), (WIDTH + 1));
 
-
 	//Call inverse function for each frame to get desired joint values
-	for (int i = 0; i < 5; i++) {
-		if (via[i][0] != 999) {	//What it should do: go through calcuations if the value is not 999
+	for (int i = 0; i < 5; i++) 
+	{
+		if (via[i][0] != 999) 
+		{	//What it should do: go through calcuations if the value is not 999
 			r_matrix = cmd.SOLVE(q0, cmd.UTOI(via[i]));
 
 			if (r_matrix[3][3] == 0) {
@@ -319,30 +325,38 @@ void robo_control::trajectoryPlan() {
 					via[i][j] = r_matrix[0][j];
 				}
 			}
-			else {
-				if (r_matrix[0][0] != r_matrix[1][0]) {
-					for (int i = 0; i < 2; i++) {
-						for (int j = 0; j < 4; j++) {
+			else 
+			{
+				if (r_matrix[0][0] != r_matrix[1][0]) 
+				{
+					for (int i = 0; i < 2; i++) 
+					{
+						for (int j = 0; j < 4; j++) 
+						{
 							dist[i] += abs(q0[j] - r_matrix[i][j]);
 						}
 					}
-					if (dist[0] > dist[1]) {
+
+					if (dist[0] > dist[1]) 
+					{
 						sln = 0;
 					}
-					else {
+					else 
+					{
 						sln = 1;
 					}
 				}
-				else {
+				else 
+				{
 					sln = 0;
 				}
-				for (int j = 0; j < 4; j++) {
+				for (int j = 0; j < 4; j++) 
+				{
 					via[i][j] = r_matrix[sln][j];
 				}
 			}
 		}
 	}
-
 
 	cout << "You have input the following joint values and time to move to: " << endl;
 	cout << setw(15) << "j1" << setw(15) << "j2" << setw(15) << "j3" << setw(15) << "j4" << setw(15) << "time (ms)" << endl;
@@ -351,7 +365,9 @@ void robo_control::trajectoryPlan() {
 
 	//Move to the Starting point
 	JOINT q1 = { via[0][0], via[0][1], via[0][2], via[0][3] };
-	MoveToConfiguration(q1, false);
+	
+	MoveToConfiguration(q1, true);
+	//DisplayConfiguration(q1);
 
 	//Get number of data points
 	samplePoints = cmd2.numofPoints(via[1][4], via[2][4], via[3][4], via[4][4]);
@@ -366,44 +382,54 @@ void robo_control::trajectoryPlan() {
 
 	//Call trajectory planning function
 	traj = cmd2.discreteTrajectory(via, numLocations, samplePoints);
-
+	
 	ii = 0;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////  FIX NEEDED /////////////////////////////////////////////////////////////////////
+	//while loop isn't exacltly doing what we need to do - jason
+	//moving by calculated position, vel, acc for resolution 30ms then putting timer to sleep for the same duration of resolution
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	cl = clock();   //starting time of clock
-
-	while (ii<samplePoints && (int)traj[0][ii][0] != 999){
-		//for (int ii = 0; ii < 4 * RES; ii++) {
-		for (int j = 1; j < 4; j++) {
-			for (int k = 0; k < 4; k++) {
+	while (ii<samplePoints && (int)traj[0][ii][0] != 999)
+	{
+		for (int j = 0; j < 4; j++) 
+		{					//for (int ii = 0; ii < 4 * RES; ii++) {
+			for (int k = 0; k < 4; k++) 
+			{
+				//are you sure this is k that needs to be incremented in traj[k][ii][j];?
 				user_form[k] = traj[k][ii][j];
 			}
-			//	if (cmd.errorFound(traj[][ii][1], 1) || cmd.errorFound(traj[][ii][2], 2) || cmd.errorFound(traj[][ii][3], 3)) {	//KARA QUESTION: Does this produce valid results?
-			if (cmd.errorFound(user_form, j )) {	//KARA QUESTION: Does this produce valid results?
+			
+			//maybe write another error check function that doesn't output all the error joints, vel, acc values rather just set bool to true or false
+			if (cmd.errorFound(user_form, j )) 
+			{	//KARA QUESTION: Does this produce valid results?
 				//cout << "ERROR FOUND" << endl;
 				FAIL = true;
 			}
 		}
-		if (!FAIL) {
-
+ 		if (!FAIL) 
+		{
+			//moving 
 			JOINT q0 = { traj[0][ii][1], traj[1][ii][1], traj[2][ii][1], traj[3][ii][1] };
 			JOINT q1 = { traj[0][ii][2], traj[1][ii][2], traj[2][ii][2], traj[3][ii][2] };
 			JOINT q2 = { traj[0][ii][3], traj[1][ii][3], traj[2][ii][3], traj[3][ii][3] };
 			MoveWithConfVelAcc(q0, q1, q2); //Kara Question: How to get the program to pause (time resoltuion delta t) before reading the next value?
-			sleep_for(milliseconds(10));
-			
-			//add sleep here.
-			//sleep in sec.
-			//_sleep(traj[0][ii + 1][0] - traj[0][ii][0]);
-			//std::this_thread::sleep_for(std::chrono::milliseconds((traj[0][ii + 1][0] - traj[0][ii][0])));
-			//final - initial time comparison
-			//Pause here
+			sleep_for(milliseconds(RES));
+			/*add sleep here.
+			sleep in sec.
+			_sleep(traj[0][ii + 1][0] - traj[0][ii][0]);
+			std::this_thread::sleep_for(std::chrono::milliseconds((traj[0][ii + 1][0] - traj[0][ii][0])));
+			final - initial time comparison
+			Pause here*/
 		}
 		ii++;
 	}
-	stopRobot();
+	stopRobot();		//modified stopRobot() function
+	
 	//ADD: end timer here and print result to compare to sum of input timer  values
 	cl = clock() - cl;  //end point of clock
 	cout << "It took " << cl / (double)CLOCKS_PER_SEC << " sec to move robot" << endl;  //prints the determined ticks per second (seconds passed)
-
+	delete[] traj;
 }
 
 /*
