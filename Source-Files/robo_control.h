@@ -24,10 +24,8 @@ class robo_control
 private:
 	mat_kin cmd;
 	traj_plan cmd2;
-
-	JOINT* q0;
-	JOINT* q1;
-
+	JOINT q0;
+	JOINT *q1, *q2, *q3;
 	double j1, j2, j3, j4;
 	double x, y, z, theta;
 	double** internal_form;
@@ -38,7 +36,13 @@ private:
 	double* vect_5;
 	char grip;
 	double** via;
+
 	double*** traj;
+	double** traj_joint0;
+	double** traj_joint1;
+	double** traj_joint2;
+	double** traj_joint3;
+
 	int ii;
 
 
@@ -49,11 +53,13 @@ public:
 	void currentJoints();
 	void currentCartesian();
 	void moveCart();
+	void moveWithVelAcc();
 	void initJoint();
 	void stopRobot();
 	void moveGriper();
 	void trajectoryPlan();								//KARA
-														//done
+	void moveWithVelAcc(JOINT& q1, JOINT& q2, JOINT& q3);
+	void RESETROBOT();
 };
 
 #endif 
