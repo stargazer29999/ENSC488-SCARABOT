@@ -6,9 +6,10 @@ using namespace std;
 
 robo_control::robo_control()
 {
-	JOINT q0 = { 100, 100, -100, 100 };
+	JOINT q0 = { 90, 0, -175, 0 };
+	//JOINT *q1, *q2, *q3;
 	OpenMonitor();
-
+	
 	internal_form = new double*[HEIGHT];
 	for (int i = 0; i < HEIGHT; i++) {
 		internal_form[i] = new double[WIDTH];
@@ -47,8 +48,8 @@ robo_control::robo_control()
 		via[i] = new double[WIDTH + 1];
 	}
 
-	traj = new double **[4];
-
+	//traj_joint0 = new double *[4];
+	
 }
 
 void robo_control::moveJOINT()
@@ -57,9 +58,7 @@ void robo_control::moveJOINT()
 	cin >> user_form[0] >> user_form[1] >> user_form[2] >> user_form[3];
 	cout << endl;
 
-	internal_form = cmd.UTOI(user_form);
-
-
+	//	internal_form = cmd.UTOI(user_form);
 	cout << "===========================================" << endl;
 	cout << "Forward Kinematics Result from WHERE(): " << endl;
 	r_matrix = cmd.WHERE(user_form);
@@ -144,21 +143,19 @@ void robo_control::moveCart()
 
 	r_matrix = cmd.SOLVE(q0, cmd.UTOI(user_form));
 
-	//cout << "Soltution 1. " << (int)r_matrix[0][0] << ", " << (int)r_matrix[0][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[0][3] << endl;
-	//cout << "Soltution 2. " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
-
 	//decided to add int casting on the joint values found from inverse kinematics in case we need more accuracy later
-	if (r_matrix[3][3] == 0) {
-		JOINT q1 = { (int)r_matrix[1][0], (int)r_matrix[1][1], (int)r_matrix[0][2], (int)r_matrix[0][3] };
+	if ((int)r_matrix[3][3] == 0) 
+	{
+		JOINT q1 = { round(r_matrix[1][0]), round(r_matrix[1][1]), round(r_matrix[0][2]), round(r_matrix[0][3])};
 		cout << "** No Valid Solution found **" << endl;
 		noSolution = true;
 		//jump to the end of function
 	}
 	else if ((int)r_matrix[3][3] == 1) {
 		cout << "** First solution is not valid**" << endl;
-		cout << "Soltution 2 is chosen: " << (int)r_matrix[1][0] << ", " << (int)r_matrix[1][1] << ", " << (int)r_matrix[0][2] << ", " << (int)r_matrix[1][3] << endl;
+		cout << "Soltution 2 is chosen: " << round(r_matrix[1][0]) << ", " << round(r_matrix[1][1]) << ", " << round(r_matrix[0][2]) << ", " << round(r_matrix[1][3]) << endl;
 
-		JOINT q1 = { (int)r_matrix[1][0], (int)r_matrix[1][1], (int)r_matrix[0][2], (int)r_matrix[1][3] };
+		JOINT q1 = { round(r_matrix[1][0]), round(r_matrix[1][1]), round(r_matrix[0][2]), round(r_matrix[1][3]) };
 
 		cl = clock();   //starting time of clock
 		MoveToConfiguration(q1, true);
@@ -166,7 +163,8 @@ void robo_control::moveCart()
 
 		cout << "===========================================" << endl;
 		cout << "Forward Kinematics from WHERE(): " << endl;
-		cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+		r_matrix = cmd.WHERE(q1);
+		cmd.printMatrix(r_matrix, HEIGHT, WIDTH);
 		cout << "===========================================" << endl;
 
 	}
@@ -182,7 +180,8 @@ void robo_control::moveCart()
 
 		cout << "===========================================" << endl;
 		cout << "Forward Kinematics from WHERE(): " << endl;
-		cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+		r_matrix = cmd.WHERE(q1);
+		cmd.printMatrix(r_matrix, HEIGHT, WIDTH);
 		cout << "===========================================" << endl;
 
 	}
@@ -209,7 +208,8 @@ void robo_control::moveCart()
 
 				cout << "===========================================" << endl;
 				cout << "Forward Kinematics from WHERE(): " << endl;
-				cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+				r_matrix = cmd.WHERE(q1);
+				cmd.printMatrix(r_matrix, HEIGHT, WIDTH);
 				cout << "===========================================" << endl;
 			}
 			else {
@@ -221,7 +221,8 @@ void robo_control::moveCart()
 
 				cout << "===========================================" << endl;
 				cout << "Forward Kinematics from WHERE(): " << endl;
-				cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+				r_matrix = cmd.WHERE(q1);
+				cmd.printMatrix(r_matrix, HEIGHT, WIDTH);
 				cout << "===========================================" << endl;
 			}
 		}
@@ -234,7 +235,8 @@ void robo_control::moveCart()
 
 			cout << "===========================================" << endl;
 			cout << "Forward Kinematics from WHERE(): " << endl;
-			cmd.printMatrix(cmd.WHERE(q1), HEIGHT, WIDTH);
+			r_matrix = cmd.WHERE(q1);
+			cmd.printMatrix(r_matrix, HEIGHT, WIDTH);
 			cout << "===========================================" << endl;
 		}
 	}
@@ -245,12 +247,11 @@ void robo_control::moveCart()
 	}
 }
 
-void robo_control::trajectoryPlan() 
+void robo_control::trajectoryPlan()
 {
-	
 	using namespace std::this_thread;	// sleep_for, sleep_until
 	using namespace std::chrono;		// nanoseconds, system_clock, seconds
-	
+
 	clock_t cl;							//initializing a clock type
 	int numLocations;
 	double dist[2] = { 0, 0 };
@@ -258,57 +259,68 @@ void robo_control::trajectoryPlan()
 	bool FAIL = false;
 	int samplePoints;
 
+	if (remove("Joints.txt") != 0 && remove("numPoints.txt") != 0)
+	{
+	}
+
 	JOINT q0;
 	GetConfiguration(q0);
 
 	cout << "The desired START location (x,y,z, phi) ";
 	cin >> via[0][0] >> via[0][1] >> via[0][2] >> via[0][3];// >> via[0][4];	//Kara: does the start frame acutally need a time?
 	via[0][4] = 999;
-	
+
 	cout << "The desired GOAL location (x,y,z, phi) and time to travel in seconds: " << endl;
 	cin >> via[4][0] >> via[4][1] >> via[4][2] >> via[4][3] >> via[4][4];
 
+	via[4][4] = via[4][4] * 1000;
 	cout << "How many intermediate locations (0, 1, 2, 3)? ";
 	cin >> numLocations;
-	if (numLocations != 0) 
+
+	
+	if (numLocations != 0) //intermediate locations
 	{
-		for (int i = 1; i<4; i++) 
-		{  
-			if (i <= numLocations) 
+		for (int i = 1; i < 4; i++)
+		{
+			if (i <= numLocations)
 			{
 				cout << "Intermediate location " << (i) << ". ";
 				cin >> via[i][0] >> via[i][1] >> via[i][2] >> via[i][3] >> via[i][4];
+				via[i][4] = via[i][4] * 1000;
 				cout << endl;
 			}
-			else 
+			else
 			{
-				for (int j = 0; j < 5; j++) 
+				for (int j = 0; j < 4; j++)
 				{
 					via[i][j] = 999;	//error code
+					via[i][4] = 0;	//error code
 				}
 			}
 		}
 	}
-	//i don't get why we need the the time elements to be 999
-	else {
-		for (int i = 1; i < 4; i++) {
-			for (int j = 0; j < 4; j++) {
+	else { //direct, no intermediate locations
+		for (int i = 1; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
 				via[i][j] = 999;	//error code
 			}
-			via[i][4] = 0;
+			via[i][4] = 0;			//time column = 0
 		}
 	}
 
 	cout << "You have input the following locations and time: " << endl;
 	cout << setw(15) << "x" << setw(15) << "y" << setw(15) << "z" << setw(15) << "phi" << setw(15) << "time (ms)" << endl;
-	cmd.printMatrix(via, (HEIGHT + 1), (WIDTH + 1));
+	cmd.printMatrix(via, (HEIGHT + 1), (WIDTH + 1));		//5x5 intermediate locations, joint, vel, acc, time
 
 	//Call inverse function for each frame to get desired joint values
-	for (int i = 0; i < 5; i++) 
+	for (int i = 0; i < 5; i++)
 	{
-		if (via[i][0] != 999) 
+		if (via[i][0] != 999)
 		{	//What it should do: go through calcuations if the value is not 999
-			r_matrix = cmd.SOLVE(q0, cmd.UTOI(via[i]));
+			internal_form = cmd.UTOI(via[i]);
+			r_matrix = cmd.SOLVE(q0, internal_form);
 
 			if (r_matrix[3][3] == 0) {
 				cout << "** No Valid Solution found **" << endl;
@@ -325,32 +337,34 @@ void robo_control::trajectoryPlan()
 					via[i][j] = r_matrix[0][j];
 				}
 			}
-			else 
+			else
 			{
-				if (r_matrix[0][0] != r_matrix[1][0]) 
+				//two solution case, check distance apart
+				if (r_matrix[0][0] != r_matrix[1][0])
 				{
-					for (int i = 0; i < 2; i++) 
+					for (int i = 0; i < 2; i++)
 					{
-						for (int j = 0; j < 4; j++) 
+						for (int j = 0; j < 4; j++)
 						{
 							dist[i] += abs(q0[j] - r_matrix[i][j]);
 						}
 					}
 
-					if (dist[0] > dist[1]) 
+					if (dist[0] > dist[1])
 					{
 						sln = 0;
 					}
-					else 
+					else
 					{
 						sln = 1;
 					}
 				}
-				else 
+				//two same solutions
+				else
 				{
 					sln = 0;
 				}
-				for (int j = 0; j < 4; j++) 
+				for (int j = 0; j < 4; j++)
 				{
 					via[i][j] = r_matrix[sln][j];
 				}
@@ -362,74 +376,120 @@ void robo_control::trajectoryPlan()
 	cout << setw(15) << "j1" << setw(15) << "j2" << setw(15) << "j3" << setw(15) << "j4" << setw(15) << "time (ms)" << endl;
 	cmd.printMatrix(via, (HEIGHT + 1), (WIDTH + 1));
 
-
-	//Move to the Starting point
 	JOINT q1 = { via[0][0], via[0][1], via[0][2], via[0][3] };
-	
+
 	MoveToConfiguration(q1, true);
 	//DisplayConfiguration(q1);
-
-	//Get number of data points
+	for (int i = 0; i < 4; i++)
+	{
+		q1[i] = 0;
+	}
+	
+	//Get number of data points - potential problem with ceiling may occur with ceiling
 	samplePoints = cmd2.numofPoints(via[1][4], via[2][4], via[3][4], via[4][4]);
 
 	//Allocate space for trajectory
-	for (int i = 0; i < (samplePoints); i++) {
-		traj[i] = new double*[WIDTH];
+//	for (int i = 0; i < (samplePoints); i++) {
+		traj_joint0 = new double*[samplePoints];
+		traj_joint1 = new double*[samplePoints];
+		traj_joint2 = new double*[samplePoints];
+		traj_joint3 = new double*[samplePoints];
 		for (int j = 0; j < WIDTH; j++) {
-			traj[i][j] = new double[WIDTH];
+			traj_joint0[j] = new double[WIDTH];
+			traj_joint1[j] = new double[WIDTH];
+			traj_joint2[j] = new double[WIDTH];
+			traj_joint3[j] = new double[WIDTH];
 		}
-	}
+//	}
 
 	//Call trajectory planning function
-	traj = cmd2.discreteTrajectory(via, numLocations, samplePoints);
-	
+	traj_joint0 = cmd2.discreteTrajectory(via, numLocations, samplePoints, 0);
+	traj_joint1 = cmd2.discreteTrajectory(via, numLocations, samplePoints, 1);
+	traj_joint2 = cmd2.discreteTrajectory(via, numLocations, samplePoints, 2);
+	traj_joint3 = cmd2.discreteTrajectory(via, numLocations, samplePoints, 3);
+	cout << "Completed the 4 joint trajectories"<<endl;
 	ii = 0;
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//////////////////////////////////////////////////  FIX NEEDED /////////////////////////////////////////////////////////////////////
-	//while loop isn't exacltly doing what we need to do - jason
-	//moving by calculated position, vel, acc for resolution 30ms then putting timer to sleep for the same duration of resolution
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	//Create files for printing out the data
+	cmd2.appPrintTrajectory("numPoints.txt", samplePoints);
+	//cmd2.appPrintTrajectory("Joints.txt", -9999);
+
+	ii = 0;
 	cl = clock();   //starting time of clock
-	while (ii<samplePoints && (int)traj[0][ii][0] != 999)
+	while (ii<samplePoints && !FAIL)
 	{
-		for (int j = 0; j < 4; j++) 
-		{					//for (int ii = 0; ii < 4 * RES; ii++) {
-			for (int k = 0; k < 4; k++) 
-			{
-				//are you sure this is k that needs to be incremented in traj[k][ii][j];?
-				user_form[k] = traj[k][ii][j];
-			}
-			
-			//maybe write another error check function that doesn't output all the error joints, vel, acc values rather just set bool to true or false
-			if (cmd.errorFound(user_form, j )) 
-			{	//KARA QUESTION: Does this produce valid results?
-				//cout << "ERROR FOUND" << endl;
-				FAIL = true;
-			}
-		}
- 		if (!FAIL) 
+		for (int j = 0; j < 4; j++) //j=0 is time, j=1 is angle/dist, j=2 is vel, j=3 is accel
 		{
-			//moving 
-			JOINT q0 = { traj[0][ii][1], traj[1][ii][1], traj[2][ii][1], traj[3][ii][1] };
-			JOINT q1 = { traj[0][ii][2], traj[1][ii][2], traj[2][ii][2], traj[3][ii][2] };
-			JOINT q2 = { traj[0][ii][3], traj[1][ii][3], traj[2][ii][3], traj[3][ii][3] };
-			MoveWithConfVelAcc(q0, q1, q2); //Kara Question: How to get the program to pause (time resoltuion delta t) before reading the next value?
-			sleep_for(milliseconds(RES));
-			/*add sleep here.
-			sleep in sec.
-			_sleep(traj[0][ii + 1][0] - traj[0][ii][0]);
-			std::this_thread::sleep_for(std::chrono::milliseconds((traj[0][ii + 1][0] - traj[0][ii][0])));
-			final - initial time comparison
-			Pause here*/
+			user_form[0] = traj_joint0[ii][j];
+			user_form[1] = traj_joint1[ii][j];
+			user_form[2] = traj_joint2[ii][j];
+			user_form[3] = traj_joint3[ii][j];
+
+			if (j == 1) {		//Print the x, y, z and PHI
+				r_matrix = cmd.WHERE(user_form);
+				cmd2.appPrintTrajectory("Joints.txt", traj_joint0[ii][0]); //print the time
+				cmd2.appPrintTrajectory("Joints.txt", r_matrix[0][3]); //print X
+				cmd2.appPrintTrajectory("Joints.txt", r_matrix[1][3]); //print Y
+				cmd2.appPrintTrajectory("Joints.txt", r_matrix[2][3]); //print Z
+				cmd2.appPrintTrajectory("Joints.txt", (user_form[0] + user_form[1] - user_form[3])); //print PHI
+				cmd2.appPrintTrajectory("Joints.txt", 9999);
+			}
+
+			//maybe write another error check function that doesn't output all the error joints, vel, acc values rather just set bool to true or false
+			if ((cmd.errorFound(user_form, j))&&j!=0)
+			{
+				FAIL = true;
+				cmd2.appPrintTrajectory("Joints.txt", 9999);
+			}
+			//cmd2.appPrintTrajectory("Joints.txt", -9999);
+		}
+		if (!FAIL)
+		{
+			JOINT q1 = { traj_joint0[ii][1], traj_joint1[ii][1], traj_joint2[ii][1], traj_joint3[ii][1] };
+			JOINT q2 = { traj_joint0[ii][2], traj_joint1[ii][2], traj_joint2[ii][2], traj_joint3[ii][2] };
+			JOINT q3 = { traj_joint0[ii][3], traj_joint1[ii][3], traj_joint2[ii][3], traj_joint3[ii][3] };
+			if (MoveWithConfVelAcc(q1, q2, q3) == true) //Kara Question: How to get the program to pause (time resoltuion delta t) before reading the next value?
+			{
+				sleep_for(milliseconds(RES));
+			}
+			//moveWithVelAcc(q1, q2, q3);
+			
 		}
 		ii++;
 	}
-	stopRobot();		//modified stopRobot() function
-	
+			
 	//ADD: end timer here and print result to compare to sum of input timer  values
 	cl = clock() - cl;  //end point of clock
 	cout << "It took " << cl / (double)CLOCKS_PER_SEC << " sec to move robot" << endl;  //prints the determined ticks per second (seconds passed)
-	delete[] traj;
+	
+	stopRobot();//modified stopRobot() function so that our robot monitor display doesn't close
+	
+/*	for (int i = 0; i < samplePoints; i++) {
+		for (int j = 0; j < WIDTH; j++) {
+			cout << setw(10) << traj_joint1[i][j];
+		}
+		cout<<endl;
+	}
+	*/
+	//deleting dynamically allocated memory
+	for (int i = 0; i <samplePoints; i++)
+	{
+		//for (int j = 0; j < WIDTH ; j++)
+		//{
+			//delete[] traj[i][j];
+			delete[] traj_joint0[i];
+			delete[] traj_joint1[i];
+			delete[] traj_joint2[i];
+			delete[] traj_joint3[i];
+
+		//}
+	}
+}
+
+//needs work here *tried to implement movewithvelAcc function - Jason
+void robo_control::moveWithVelAcc(JOINT& q1, JOINT& q2, JOINT& q3)
+{
+	MoveWithConfVelAcc(q1,q2,q3);
 }
 
 /*
@@ -452,3 +512,8 @@ cout << "failed";
 }
 }
 */
+
+void robo_control::RESETROBOT() {
+	ResetRobot();
+}
+
