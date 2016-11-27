@@ -1,5 +1,5 @@
 #include "mat_kin.h"
-
+#include "ensc-488.h"
 using namespace std;
 
 mat_kin::mat_kin()
@@ -45,7 +45,7 @@ double** mat_kin::UTOI(double* user_form)
 	x = user_form[0];
 	y = user_form[1];
 	z = user_form[2];
-	theta = user_form[3] * (PI / 180);
+	theta = DEG2RAD(user_form[3]); // * (PI / 180);
 
 	//Assign values
 	//first row
@@ -63,7 +63,7 @@ double** mat_kin::UTOI(double* user_form)
 	//third row
 	internal_form[2][0] = 0;
 	internal_form[2][1] = 0;
-	internal_form[2][2] = 1;
+	internal_form[2][2] = -1;
 	internal_form[2][3] = z;
 
 	//fourth
@@ -74,7 +74,6 @@ double** mat_kin::UTOI(double* user_form)
 
 	return internal_form;
 }
-
 /* Function: ITOU
 * Takes the Transformation matrix and outputs the values of x, y,z and theta
 */
@@ -83,11 +82,10 @@ double* mat_kin::ITOU(double** internal_form)
 	user_form[0] = internal_form[0][3];
 	user_form[1] = internal_form[1][3];
 	user_form[2] = internal_form[2][3];
-	user_form[3] = acos(internal_form[0][0])*(180 / PI);
+	user_form[3] = RAD2DEG(acos(internal_form[0][0])); //*(180 / PI);
 
 	return user_form;
 }
-
 /* Function: TMULT
 * Takes two transformation matrices of 4x4 and multiplies them together
 * Then ouputs the result as a matrix
@@ -106,7 +104,6 @@ double** mat_kin::TMULT(double** t_matrix1, double** t_matrix2)
 
 	return r_matrix;
 }
-
 double** mat_kin::TINVERT(double** internal_form)
 {
 	temp = internal_form[0][1];
@@ -141,10 +138,10 @@ double** mat_kin::TINVERT(double** internal_form)
 double** mat_kin::WHERE(double* joint)
 {
 
-	the1 = joint[0] * (PI / 180);
-	the2 = joint[1] * (PI / 180);
+	the1 = DEG2RAD(joint[0]);// *(PI / 180);
+	the2 = DEG2RAD(joint[1]);// * (PI / 180);
 	d3 = joint[2];
-	the4 = joint[3] * (PI / 180);
+	the4 = DEG2RAD(joint[3]); //joint[3] * (PI / 180);
 
 
 	internal_form[0][0] = cos(the1 + the2 - the4);
@@ -160,7 +157,7 @@ double** mat_kin::WHERE(double* joint)
 	internal_form[2][0] = 0;
 	internal_form[2][1] = 0;
 	internal_form[2][2] = -1;
-	internal_form[2][3] = -d3-75;//- d3 + 125;	//frame moved to base see demo1.m file (ask Caelan)s
+	internal_form[2][3] = -d3 - 75;//- d3 + 125;	//frame moved to base see demo1.m file (ask Caelan)s
 	internal_form[3][0] = 0;
 	internal_form[3][1] = 0;
 	internal_form[3][2] = 0;
@@ -168,7 +165,6 @@ double** mat_kin::WHERE(double* joint)
 
 	return internal_form;
 }
-
 double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 {
 	double **joints;
@@ -200,30 +196,37 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	joint2[0] = atan2(sqrt(1 - A*A), A);
 	joint2[1] = atan2(-sqrt(1 - A*A), A);
 
+		double k1[] = { 195 + (142 * cos(joint2[0])), 195 + (142 * cos(joint2[1])) };
+	double k2[] = { 142 * sin(joint2[0]), 142 * sin(joint2[1]) };
+
 	//theta1 = findTheta1(px, py, oldJoints[1]);
-	for (int i = 0; i < 2; i++) {
-		
-		r = sqrt(pow((195 + 142 * cos(joint2[i])), 2) + pow(142 * sin(joint2[i]), 2));// jason
-		if (r == 0) {
+	for (int i = 0; i < 2; i++) 
+	{
+		r = sqrt(pow(k1[i], 2) + pow(k2[i], 2));// jason
+		if (r == 0) 
+		{
 			cout << "no solution" << endl;//do we really need this? it'll get checked in error checking
 			joints[3][3] = 0;
 		}
-		else {
-			gamma = atan2(142* sin(joint2[i]), (195 +142* cos(joint2[i])));
-			joint1[i] = atan2(py, px) - gamma;
-		}	
+		else 
+		{
+			//gamma = atan2(k2[i], k1[i]);
+			//joint1[i] = atan2(py, px) - gamma;
+			joint1[i] = atan2((k1[i] * py - k2[i] * px), (k1[i] * px + k2[i] * py));
+
+		}
 	}
 
-	joint3 = -pz - 75;			
+	joint3 = -pz - 75;
 
 	joint4[0] = joint1[0] + joint2[0] - atan2(r10, r00);
 	joint4[1] = joint1[1] + joint2[1] - atan2(r10, r00);
-	joint1[0] = joint1[0] * 180 / PI;
-	joint1[1] = joint1[1] * 180 / PI;
-	joint2[0] = joint2[0] * 180 / PI; 
-	joint2[1] = joint2[1] * 180 / PI;
-	joint4[0] = joint4[0] * 180 / PI;
-	joint4[1] = joint4[1] * 180 / PI;
+	joint1[0] = RAD2DEG(joint1[0])+90;  //Jason. added 90 degrees to joint 1 to accounnt for TA's origin configuration
+	joint1[1] = RAD2DEG(joint1[1])+90;  //Jason. added 90 degrees to joint 1 to accounnt for TA's origin configuration
+	joint2[0] = RAD2DEG(joint2[0]);// * 180 / PI; 
+	joint2[1] = RAD2DEG(joint2[1]);// * 180 / PI;
+	joint4[0] = RAD2DEG(joint4[0]);// * 180 / PI;
+	joint4[1] = RAD2DEG(joint4[1]);// * 180 / PI;
 
 	//correcting joint 1 solution 1
 	if (joint1[0] > 180)
@@ -243,7 +246,7 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 	{
 		joint1[1] = joint1[1] + 360;
 	}
-	
+
 	//correcting joint 2 solution 1
 	if (joint2[0] > 180)
 	{
@@ -323,10 +326,6 @@ double** mat_kin::SOLVE(double* oldJoints, double** Tmatrix)
 		joints[3][3] = 2;
 	}
 	return joints;
-//	for (int i = 0; i < HEIGHT; i++) {
-//		delete[] joints[i];
-//	}
-//	delete[] joints;*/
 }
 
 /*Function: printInternalMatrix
@@ -353,7 +352,6 @@ void mat_kin::printMatrix(double** matrix, int height, int width) {
 		cout << endl;
 	}
 }
-
 bool mat_kin::errorFound(double *values, int selection) {
 
 	if (selection == 1){		// Check Joint values
@@ -366,7 +364,7 @@ bool mat_kin::errorFound(double *values, int selection) {
 			cout << "ERROR: Joint 2 limit" << endl;
 			return true;
 		}
-		else if ((values[2]) < -200 || ((values[2]) > -100)) {
+		else if ((int)(values[2]) < -200 || ((int)(values[2]) > -100)) {
 			cout << "ERROR: Joint 3 limit" << endl;
 			return true;
 		}
@@ -382,13 +380,13 @@ bool mat_kin::errorFound(double *values, int selection) {
 
 		if (round(values[0]) > 150 || round(values[0]) < -150) {
 			cout << "ERROR: Velocity Joint 1 limit" << endl;
-			return true; 
+			return true;
 		}
 		else if (round(values[1]) > 150 || round(values[1]) < -150) {
 			cout << "ERROR: Velocity Joint 2 limit" << endl;
 			return true;
 		}
-		else if ((values[2]) > 50 || values[2] < -50) {
+		else if ((round(values[2]) > 50 || round(values[2]) < -50)) {
 			cout << "ERROR: Velocity Joint 3 limit" << endl;
 			return true;
 		}
