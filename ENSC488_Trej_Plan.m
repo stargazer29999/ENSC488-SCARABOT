@@ -24,7 +24,7 @@ m2v_2 = solve(m2(2,:)*m2v==m2a(2,:), v_2); %v_2 = f(v_1)
 
 m2Sol_temp1 = subs(m2v_2, v_1, m2v_1);
 m2Sol_v2 = simplifyFraction(solve(m2Sol_temp1==v_2, v_2)); %solves for v2
-m2Sol_v1 = subs(m2v_1, v_2, m2Sol_v1); %solves for v1
+m2Sol_v1 = subs(m2v_1, v_2, m2Sol_v2); %solves for v1
 
 %% Case 3: 5 Points: Start -> Via1 -> Via2 -> Via3 -> Goal (m=4, 3 eqts)
 
