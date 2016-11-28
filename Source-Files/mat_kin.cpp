@@ -144,15 +144,15 @@ double** mat_kin::WHERE(double* joint)
 	the4 = DEG2RAD(joint[3]); //joint[3] * (PI / 180);
 
 
-	internal_form[0][0] = cos(the1 + the2 - the4);
-	internal_form[0][1] = sin(the1 + the2 - the4);
+	internal_form[0][0] = cos(the1 + the2 - the4 + PI/2);
+	internal_form[0][1] = sin(the1 + the2 - the4 + PI / 2);
 	internal_form[0][2] = 0;
-	internal_form[0][3] = 195 * cos(the1) + 142 * cos(the1 + the2);
+	internal_form[0][3] = 195 * cos(the1 + PI / 2) + 142 * cos(the1 + PI / 2 + the2);
 
-	internal_form[1][0] = sin(the1 + the2 - the4);
-	internal_form[1][1] = -cos(the1 + the2 - the4);
+	internal_form[1][0] = sin(the1 + the2 - the4 + PI / 2);
+	internal_form[1][1] = -cos(the1 + the2 - the4 + PI / 2);
 	internal_form[1][2] = 0;
-	internal_form[1][3] = 195 * sin(the1) + 142 * sin(the1 + the2);
+	internal_form[1][3] = 195 * sin(the1 + PI / 2) + 142 * sin(the1 + the2 + PI / 2);				//fixing the cartesian output by multiplying by -1 to account deal with 90deg addition to x /
 
 	internal_form[2][0] = 0;
 	internal_form[2][1] = 0;
